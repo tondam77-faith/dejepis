@@ -28,7 +28,7 @@
             margin: 0;
             padding: 20px;
             line-height: 1.6;
-            -webkit-tap-highlight-color: transparent; /* Pro lepší pocit na mobilu */
+            -webkit-tap-highlight-color: transparent;
         }
 
         .container {
@@ -54,7 +54,7 @@
             background-color: var(--primary-color);
             color: white;
             border: none;
-            padding: 15px 30px; /* Větší tlačítka pro prst na mobilu */
+            padding: 15px 30px;
             border-radius: 12px;
             font-size: 1.1rem;
             cursor: pointer;
@@ -64,21 +64,11 @@
             touch-action: manipulation;
         }
 
-        .btn:hover {
-            background-color: #132c45;
-        }
+        .btn:hover { background-color: #132c45; }
+        .btn-accent { background-color: var(--accent-color); }
+        .btn-accent:hover { background-color: #d35400; }
 
-        .btn-accent {
-            background-color: var(--accent-color);
-        }
-
-        .btn-accent:hover {
-            background-color: #d35400;
-        }
-
-        input[type="file"] {
-            display: none;
-        }
+        input[type="file"] { display: none; }
 
         .file-upload-label {
             display: inline-block;
@@ -91,15 +81,8 @@
             color: #555;
         }
 
-        .slider-container {
-            margin: 20px 0;
-            padding: 0 10px;
-        }
-
         /* --- Interaktivní test --- */
-        #test-area {
-            display: none;
-        }
+        #test-area { display: none; }
 
         .question-block {
             background: white;
@@ -127,15 +110,16 @@
             object-fit: contain;
         }
 
-        .answer-input {
+        .answer-input, select.answer-input {
             width: 100%;
             padding: 15px;
             border: 2px solid #ddd;
             border-radius: 12px;
-            font-size: 1.1rem; /* Větší písmo pro mobil */
+            font-size: 1.1rem;
             box-sizing: border-box;
             margin-top: 5px;
             font-family: inherit;
+            background: white;
         }
         
         .answer-input:focus {
@@ -157,15 +141,30 @@
             margin-top: 8px;
             font-style: italic;
         }
-        
-        /* Patička pro PWA instalaci (volitelné info) */
-        .footer-info {
-            text-align: center;
-            font-size: 0.8rem;
-            color: #999;
-            margin-top: 40px;
-        }
 
+        /* ABCD Styles */
+        .abcd-options {
+            display: grid;
+            gap: 10px;
+        }
+        .btn-option {
+            background: #f4f4f4;
+            color: #333;
+            text-align: left;
+            border: 2px solid #ddd;
+            padding: 12px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+        .btn-option:hover { background: #e9e9e9; }
+        .btn-option.selected {
+            background: #d6eaf8;
+            border-color: var(--primary-color);
+            font-weight: bold;
+        }
+        
         /* --- Tisk --- */
         #print-area { display: none; }
 
@@ -196,11 +195,21 @@
             
             <div id="settings-area" style="display:none;">
                 <hr style="border: 0; border-top: 1px solid #eee; margin: 25px 0;">
-                <p>Počet otázek v testu:</p>
-                <div class="slider-container">
-                    <input type="range" id="q-count-slider" min="1" max="10" value="5" style="width: 100%; height: 20px;">
-                    <p style="font-size: 1.5rem; font-weight: bold; color: var(--accent-color); margin: 5px 0;"><span id="q-count-display">5</span></p>
+                
+                <p>Počet otázek:</p>
+                <select id="q-count-select" class="answer-input" style="margin-bottom: 20px;">
+                    <option value="5">5 otázek</option>
+                    <option value="10">10 otázek</option>
+                    <option value="15">15 otázek</option>
+                    <option value="999">Všechny dostupné</option>
+                </select>
+
+                <p>Typ testu:</p>
+                <div style="display:flex; gap:10px; margin-bottom: 25px;">
+                    <button id="mode-write" class="btn" style="flex:1; background-color: var(--primary-color);" onclick="setMode('write')">✍️ Psaní</button>
+                    <button id="mode-abcd" class="btn" style="flex:1; background-color: #ddd; color:#333;" onclick="setMode('abcd')">🔠 ABCD</button>
                 </div>
+
                 <button class="btn btn-accent" style="width: 100%;" onclick="generateTest()">🚀 Spustit test</button>
             </div>
         </div>
@@ -228,7 +237,7 @@
     </div>
 
     <script>
-        // --- 1. PWA Service Worker Registrace ---
+        // --- 1. PWA Service Worker ---
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./sw.js')
@@ -240,31 +249,28 @@
         // --- 2. Logika aplikace ---
         let allQuestions = [];
         let currentTestQuestions = [];
+        let testMode = 'write'; // 'write' nebo 'abcd'
+
+        function setMode(mode) {
+            testMode = mode;
+            document.getElementById('mode-write').style.backgroundColor = mode === 'write' ? 'var(--primary-color)' : '#ddd';
+            document.getElementById('mode-write').style.color = mode === 'write' ? 'white' : '#333';
+            document.getElementById('mode-abcd').style.backgroundColor = mode === 'abcd' ? 'var(--primary-color)' : '#ddd';
+            document.getElementById('mode-abcd').style.color = mode === 'abcd' ? 'white' : '#333';
+        }
 
         document.getElementById('file-input').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
-
             const reader = new FileReader();
             reader.onload = function(e) {
                 try {
                     allQuestions = JSON.parse(e.target.result);
                     if (!Array.isArray(allQuestions)) throw new Error("Data nejsou pole.");
-                    
-                    const slider = document.getElementById('q-count-slider');
-                    slider.max = allQuestions.length;
-                    slider.value = Math.min(5, allQuestions.length);
-                    document.getElementById('q-count-display').textContent = slider.value;
                     document.getElementById('settings-area').style.display = 'block';
-                } catch (err) {
-                    alert("Chyba dat: " + err.message);
-                }
+                } catch (err) { alert("Chyba dat: " + err.message); }
             };
             reader.readAsText(file);
-        });
-
-        document.getElementById('q-count-slider').addEventListener('input', function(e) {
-            document.getElementById('q-count-display').textContent = e.target.value;
         });
 
         function shuffleArray(array) {
@@ -276,9 +282,27 @@
         }
 
         function generateTest() {
-            const count = parseInt(document.getElementById('q-count-slider').value);
+            const countVal = parseInt(document.getElementById('q-count-select').value);
+            const count = Math.min(countVal, allQuestions.length);
+            
+            // Náhodný výběr otázek
             currentTestQuestions = shuffleArray([...allQuestions]).slice(0, count);
             
+            // Pokud je režim ABCD, vygenerujeme distraktory (špatné odpovědi)
+            if(testMode === 'abcd') {
+                currentTestQuestions.forEach(q => {
+                    // Vezmeme všechny odpovědi z jiných otázek
+                    const otherAnswers = allQuestions
+                        .filter(item => item.q !== q.q) // Vyloučit aktuální
+                        .map(item => item.a[0]); // Vzít první správnou odpověď cizí otázky
+                    
+                    // Zamíchat a vzít 3
+                    const wrongOptions = shuffleArray(otherAnswers).slice(0, 3);
+                    // Přidat správnou, zamíchat vše
+                    q.options = shuffleArray([...wrongOptions, q.a[0]]);
+                });
+            }
+
             renderInteractive();
             renderPrint();
 
@@ -290,17 +314,39 @@
         function renderInteractive() {
             const container = document.getElementById('questions-container');
             container.innerHTML = '';
+            
             currentTestQuestions.forEach((q, index) => {
                 let imgHtml = q.qImg ? `<img src="${q.qImg}" class="q-image" alt="Obrázek">` : '';
+                
+                let inputHtml = '';
+                if (testMode === 'write') {
+                    inputHtml = `<input type="text" class="answer-input" placeholder="Tvoje odpověď..." id="ans-${index}" autocomplete="off">`;
+                } else {
+                    // ABCD Tlačítka
+                    inputHtml = `<div class="abcd-options">`;
+                    q.options.forEach(opt => {
+                        inputHtml += `<button class="btn-option" onclick="selectOption(${index}, '${opt}', this)">${opt}</button>`;
+                    });
+                    inputHtml += `</div><input type="hidden" id="ans-${index}">`; // Skrytý input pro uložení
+                }
+
                 container.innerHTML += `
                     <div class="question-block">
                         <div class="question-text">${index + 1}. ${q.q}</div>
                         ${imgHtml}
-                        <input type="text" class="answer-input" placeholder="Tvoje odpověď..." id="ans-${index}" autocomplete="off">
+                        ${inputHtml}
                         <div class="feedback" id="feed-${index}"></div>
                     </div>
                 `;
             });
+        }
+
+        // Pomocná funkce pro výběr ABCD
+        window.selectOption = function(qIndex, text, btnElement) {
+            document.getElementById(`ans-${qIndex}`).value = text;
+            const parent = btnElement.parentElement;
+            Array.from(parent.children).forEach(b => b.classList.remove('selected'));
+            btnElement.classList.add('selected');
         }
 
         function renderPrint() {
@@ -325,8 +371,6 @@
                 const input = document.getElementById(`ans-${index}`);
                 const feedback = document.getElementById(`feed-${index}`);
                 const userAns = input.value.trim().toLowerCase();
-                
-                // Normalizace pro odstranění diakritiky (volitelné vylepšení)
                 const normalize = (str) => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
                 
                 const isCorrect = q.a.some(ans => 
