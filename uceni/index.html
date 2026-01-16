@@ -13,8 +13,8 @@
         body { font-family: 'Segoe UI', system-ui, sans-serif; background-color: var(--bg); margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 15px; color: #2c3e50; }
         .container { width: 100%; max-width: 500px; text-align: center; }
         
-        /* --- ODRAZKY A TEXT --- */
-        .a-list, .a-single, .text p { color: var(--primary) !important; font-weight: 500; }
+        /* --- ODRAZKY A TEXT (Tmavě modrá pro lepší čitelnost) --- */
+        .a-list, .a-single, .text p, .a-list li { color: var(--primary) !important; font-weight: 500; }
         .a-list li { margin-bottom: 8px; }
 
         .deck-menu { background: #f1ede4; padding: 20px; border-radius: 20px; border: 1px solid #e2ddd3; margin-bottom: 20px; text-align: left; display: flex; flex-direction: column; }
@@ -56,8 +56,8 @@
         /* --- OPRAVA PRO NOTEBOOKY / PC --- */
         @media (min-width: 768px) {
             .container { max-width: 800px; }
-            .card-box { height: 380px; margin-bottom: 20px; } /* Menší výška */
-            .q-img { max-height: 160px; } /* Menší obrázky */
+            .card-box { height: 380px; margin-bottom: 20px; }
+            .q-img { max-height: 160px; }
             .q-text { font-size: 1.8rem; }
         }
     </style>
@@ -145,6 +145,27 @@
     let db, decks = {}, sessionCards = [], sessionIdx = 0, sessionLimit = 20, transitioning = false;
     const DB_NAME = "HistorySRSDatabase", DB_VERSION = 1;
 
+    // STARTOVACÍ DATA - Arabská říše
+    const defaultData = {
+        "Arabská říše": [
+            {q: "Kdo byl zakladatelem islámu?", a: ["Mohamed"], qImg: "", id: 1710001, nextReview: 0, ef: 2.5, reps: 0, interval: 0, deck: "Arabská říše", archived: false},
+            {q: "Jak se nazývá posvátná kniha islámu?", a: ["Korán"], qImg: "", id: 1710002, nextReview: 0, ef: 2.5, reps: 0, interval: 0, deck: "Arabská říše", archived: false},
+            {q: "Ve kterém roce došlo k hidžře (odchod Mohameda z Mekky)?", a: ["622"], qImg: "", id: 1710003, nextReview: 0, ef: 2.5, reps: 0, interval: 0, deck: "Arabská říše", archived: false},
+            {q: "Jak se nazývají nástupci Mohameda v čele říše?", a: ["Chalífové"], qImg: "", id: 1710004, nextReview: 0, ef: 2.5, reps: 0, interval: 0, deck: "Arabská říše", archived: false},
+            {q: "Které město je pro muslimy nejsvětější?", a: ["Mekka"], qImg: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/Mecca_in_Saudi_Arabia.jpg/640px-Mecca_in_Saudi_Arabia.jpg", id: 1710005, nextReview: 0, ef: 2.5, reps: 0, interval: 0, deck: "Arabská říše", archived: false},
+            {q: "Jak se jmenoval slavný arabský lékař a filozof (Ibn Síná)?", a: ["Avicenna"], qImg: "", id: 1710006, nextReview: 0, ef: 2.5, reps: 0, interval: 0, deck: "Arabská říše", archived: false},
+            {q: "Co je to džihád?", a: ["Snaha o šíření islámu / Svatá válka"], qImg: "", id: 1710007, nextReview: 0, ef: 2.5, reps: 0, interval: 0, deck: "Arabská říše", archived: false},
+            {q: "Jak se nazývá arabské číslice, které používáme?", a: ["Indo-arabské číslice"], qImg: "", id: 1710008, nextReview: 0, ef: 2.5, reps: 0, interval: 0, deck: "Arabská říše", archived: false},
+            {q: "Který stavební sloh je typický pro arabskou kulturu?", a: ["Islámská architektura (mešity, minarety)"], qImg: "", id: 1710009, nextReview: 0, ef: 2.5, reps: 0, interval: 0, deck: "Arabská říše", archived: false},
+            {q: "Jak se jmenovala dynastie, která vládla z Damašku?", a: ["Umajjovci"], qImg: "", id: 1710010, nextReview: 0, ef: 2.5, reps: 0, interval: 0, deck: "Arabská říše", archived: false},
+            {q: "Jak se jmenovala dynastie, která vládla z Bagdádu?", a: ["Abbásovci"], qImg: "", id: 1710011, nextReview: 0, ef: 2.5, reps: 0, interval: 0, deck: "Arabská říše", archived: false},
+            {q: "Co je to mešita?", a: ["Muslimská modlitebna"], qImg: "", id: 1710012, nextReview: 0, ef: 2.5, reps: 0, interval: 0, deck: "Arabská říše", archived: false},
+            {q: "Jak se nazývá věž u mešity, odkud muezzin svolává k modlitbě?", a: ["Minaret"], qImg: "", id: 1710013, nextReview: 0, ef: 2.5, reps: 0, interval: 0, deck: "Arabská říše", archived: false},
+            {q: "Kterou říši Arabové v 7. století zničili (Perskou nebo Byzantskou)?", a: ["Perskou říši"], qImg: "", id: 1710014, nextReview: 0, ef: 2.5, reps: 0, interval: 0, deck: "Arabská říše", archived: false},
+            {q: "Co zakazuje islám zobrazovat?", a: ["Lidi a zvířata (Alláha a proroka)"], qImg: "", id: 1710015, nextReview: 0, ef: 2.5, reps: 0, interval: 0, deck: "Arabská říše", archived: false}
+        ]
+    };
+
     async function dbOpen() { return new Promise(r => { const req = indexedDB.open(DB_NAME, DB_VERSION); req.onupgradeneeded = e => e.target.result.createObjectStore("state"); req.onsuccess = e => { db = e.target.result; r(); }; }); }
     async function dbSave(d) { const tx = db.transaction("state", "readwrite"); tx.objectStore("state").put(d, "currentDecks"); }
     async function dbLoad() { return new Promise(r => { const tx = db.transaction("state", "readonly"); const req = tx.objectStore("state").get("currentDecks"); req.onsuccess = () => r(req.result); }); }
@@ -154,13 +175,24 @@
     (async function init() {
         await dbOpen();
         if (navigator.storage?.persist) await navigator.storage.persist();
-        decks = (await dbLoad()) || {};
+        decks = (await dbLoad());
+        
+        // --- OPRAVA: Pokud je databáze prázdná, nahrajeme startovací data ---
+        if (!decks || Object.keys(decks).length === 0) {
+            decks = defaultData;
+            await dbSave(decks);
+        }
+        
         renderMenu();
     })();
 
     function renderMenu() {
         const list = document.getElementById('deck-list'), arch = document.getElementById('archived-list');
         list.innerHTML = ""; arch.innerHTML = ""; let hasArch = false;
+        
+        // Ošetření, pokud by decks bylo null (pojistka)
+        if(!decks) decks = {};
+
         Object.keys(decks).forEach(n => {
             const isA = decks[n][0]?.archived, due = decks[n].filter(c => c.nextReview <= Date.now()).length;
             const h = `<div class="deck-option"><input type="checkbox" value="${n}" ${isA?'':'checked'}>
@@ -170,6 +202,7 @@
             if(isA){ arch.innerHTML += h; hasArch = true; } else list.innerHTML += h;
         });
         document.getElementById('archived-section').classList.toggle('hidden', !hasArch);
+        if(Object.keys(decks).length === 0) list.innerHTML = "<div>Zatím žádné balíčky.</div>";
     }
 
     function exportForTest(name) {
@@ -227,4 +260,12 @@
         dbSave(decks); clearForm(); renderEditorList(); 
     }
     function renderEditorList() { document.getElementById('editor-card-list').innerHTML = decks[activeDeck].map(c => `<div style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #eee; font-size:0.85rem;"><div>${c.q}</div><div><span onclick="loadEdit(${c.id})" style="cursor:pointer; margin-right:10px;">✏️</span><span onclick="delCard(${c.id})" style="cursor:pointer; color:red;">🗑️</span></div></div>`).join(''); }
-    function loadEdit(id) { const c=decks[activeDeck].find(i=>i.id==id); document.getElementById('in-card-q').value=c.q; document.getElementById('in-card-a').value=c.a.join('\n'); document.getElementById('in-card-img').value=c.qImg||""; document.getElementById('in-card-id').
+    function loadEdit(id) { const c=decks[activeDeck].find(i=>i.id==id); document.getElementById('in-card-q').value=c.q; document.getElementById('in-card-a').value=c.a.join('\n'); document.getElementById('in-card-img').value=c.qImg||""; document.getElementById('in-card-id').value=c.id; }
+    function clearForm() { document.getElementById('in-card-q').value=""; document.getElementById('in-card-a').value=""; document.getElementById('in-card-img').value=""; document.getElementById('in-card-id').value=""; }
+    function delCard(id) { if(confirm("Smazat?")){ decks[activeDeck]=decks[activeDeck].filter(i=>i.id!=id); dbSave(decks); renderEditorList(); } }
+    function toggleArchive(n) { const s=!decks[n][0].archived; decks[n].forEach(c=>c.archived=s); dbSave(decks); renderMenu(); }
+    function exportData() { const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify(decks)])); a.download="historie_full_backup.json"; a.click(); }
+    function importData(e) { const r=new FileReader(); r.onload=async v=>{ try{ const d=JSON.parse(v.target.result); decks=d; await dbSave(decks); location.reload(); }catch(e){alert("Chyba dat");} }; r.readAsText(e.target.files[0]); }
+</script>
+</body>
+</html>
