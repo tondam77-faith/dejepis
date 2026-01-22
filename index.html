@@ -6,113 +6,171 @@
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="favicon.ico" type="image/x-icon">
     <meta name="theme-color" content="#fdfbf7">
-    <title>Dějepis Super-App</title>
+    <title>Dějepis - Super App v2.2</title>
     <style>
         :root {
             --primary: #1a3a5a; --accent: #e67e22; --bg: #fdfbf7;
-            --card-front: #ffffff; --success: #27ae60; --danger: #e74c3c;
-            --nav-height: 70px;
+            --card-front: #ffffff; --highlight: #ffce54; --danger: #e74c3c; --gray: #95a5a6;
+            --success: #27ae60; --nav-height: 70px;
         }
+
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
         body {
             font-family: 'Segoe UI', system-ui, sans-serif;
-            background-color: var(--bg); margin: 0; height: 100vh;
-            display: flex; flex-direction: column; color: #2c3e50; overflow: hidden;
+            background-color: var(--bg); margin: 0; 
+            height: 100vh; color: #2c3e50; overflow: hidden;
+            display: flex; flex-direction: column;
         }
 
-        /* --- HLAVNÍ BLOKY --- */
-        .view { flex: 1; overflow-y: auto; padding: 20px; padding-bottom: 90px; display: none; }
-        .view.active { display: block; animation: fadeIn 0.3s; }
+        /* --- HLAVNÍ KONTEJNER (Centrování) --- */
+        .container { 
+            width: 100%; max-width: 600px; margin: 0 auto;
+            flex: 1; display: flex; flex-direction: column;
+            overflow-y: hidden; position: relative;
+        }
+
+        .view {
+            flex: 1; overflow-y: auto; padding: 15px; 
+            padding-bottom: 90px; /* Místo pro lištu */
+            display: none;
+        }
+        .view.active { display: flex; flex-direction: column; animation: fadeIn 0.3s; }
+
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* --- NAVIGACE --- */
+        /* --- SPODNÍ NAVIGACE --- */
         .bottom-nav {
-            position: fixed; bottom: 0; left: 0; width: 100%; height: var(--nav-height);
-            background: white; border-top: 1px solid #ddd;
+            position: absolute; bottom: 0; left: 0; width: 100%; height: var(--nav-height);
+            background: white; border-top: 1px solid #e2ddd3;
             display: flex; justify-content: space-around; align-items: center;
-            box-shadow: 0 -2px 10px rgba(0,0,0,0.05); z-index: 1000;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.05); z-index: 1000;
         }
         .nav-item {
             display: flex; flex-direction: column; align-items: center;
             color: #999; font-size: 0.75rem; cursor: pointer;
-            width: 100%; height: 100%; justify-content: center;
+            width: 100%; height: 100%; justify-content: center; transition: 0.2s;
         }
-        .nav-item.active { color: var(--primary); font-weight: bold; }
-        .nav-icon { font-size: 1.5rem; margin-bottom: 3px; }
+        .nav-item.active { color: var(--primary); transform: translateY(-2px); }
+        .nav-icon { font-size: 1.6rem; margin-bottom: 3px; }
 
         /* --- UI PRVKY --- */
-        h2 { color: var(--primary); margin-top: 0; }
-        .card-box { background: white; padding: 20px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 15px; }
-        .btn-main { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 12px; width: 100%; font-weight: bold; font-size: 1.1rem; cursor: pointer; margin-top: 10px; }
-        .btn-alt { background: var(--accent); color: white; border: none; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        .deck-item { display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px; border-radius: 12px; margin-bottom: 10px; border: 1px solid #eee; cursor: pointer; }
+        h2 { color: var(--primary); margin-top: 0; text-align: center; }
+        .card-box { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); margin-bottom: 15px; border: 1px solid #e2ddd3; }
         
-        /* --- UČENÍ (FLIP) --- */
-        .fc-container { perspective: 1000px; height: 350px; cursor: pointer; }
-        .fc-card { position: relative; width: 100%; height: 100%; transition: transform 0.6s; transform-style: preserve-3d; }
+        .btn-main { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 12px; width: 100%; font-weight: bold; font-size: 1.1rem; cursor: pointer; transition: background 0.2s; }
+        .btn-main:active { background: #132c45; }
+        
+        .btn-alt { background: var(--accent); color: white; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.9rem; }
+        .deck-item { display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px; border-radius: 12px; margin-bottom: 10px; border: 1px solid #ddd; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
+        .deck-name { font-weight: bold; font-size: 1.05rem; }
+
+        /* --- UČENÍ (FLIP KARTY) --- */
+        .fc-container { perspective: 1000px; flex: 1; display: flex; align-items: center; justify-content: center; min-height: 300px; margin: 10px 0; }
+        .fc-card { position: relative; width: 100%; height: 100%; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); transform-style: preserve-3d; }
         .fc-card.flipped { transform: rotateY(180deg); }
-        .fc-front, .fc-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 20px; padding: 20px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; box-shadow: 0 8px 20px rgba(0,0,0,0.1); background: white; border: 1px solid #eee; overflow-y: auto; }
+        .fc-front, .fc-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 24px; padding: 25px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; box-shadow: 0 10px 30px rgba(26, 58, 90, 0.15); background: var(--card-front); border: 1px solid #f0f0f0; overflow-y: auto; }
         .fc-back { background: var(--primary); color: white; transform: rotateY(180deg); }
-        .q-img { max-height: 120px; border-radius: 8px; margin-bottom: 10px; object-fit: contain; }
-        .q-text { font-size: 1.3rem; font-weight: bold; }
+        
+        .q-text { font-size: 1.5rem; font-weight: bold; line-height: 1.4; }
+        .q-img { max-height: 150px; border-radius: 8px; margin-bottom: 15px; object-fit: contain; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        
+        /* Odpovědi - seznam */
+        .a-list { text-align: left; width: 100%; padding-left: 10px; font-size: 1.2rem; }
+        .a-item { margin-bottom: 8px; display: flex; align-items: flex-start; }
+        .a-bullet { color: var(--highlight); margin-right: 10px; font-weight: bold; }
+
+        /* --- SRS TLAČÍTKA --- */
+        #srs-buttons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; width: 100%; margin-top: auto; }
+        .srs-btn { border: none; padding: 12px 2px; border-radius: 12px; color: white; font-weight: bold; cursor: pointer; font-size: 0.85rem; display: flex; flex-direction: column; align-items: center; }
+        .srs-btn span { font-size: 0.65rem; font-weight: normal; margin-top: 3px; opacity: 0.9; }
+        .b-0 { background: var(--danger); } .b-1 { background: var(--accent); } .b-2 { background: #3498db; } .b-3 { background: var(--success); }
 
         /* --- TESTOVÁNÍ --- */
-        .test-options { display: grid; gap: 10px; }
-        .test-btn { background: white; border: 2px solid #ddd; padding: 15px; border-radius: 12px; text-align: left; font-size: 1rem; cursor: pointer; }
-        .test-btn.correct { background: #d4edda; border-color: #28a745; color: #155724; }
-        .test-btn.wrong { background: #f8d7da; border-color: #dc3545; color: #721c24; }
-        .input-write { width: 100%; padding: 15px; border: 2px solid #ddd; border-radius: 12px; font-size: 1.1rem; }
+        .mode-switch { display: flex; gap: 10px; margin-bottom: 20px; background: #eee; padding: 5px; border-radius: 12px; }
+        .mode-btn { flex: 1; padding: 10px; border-radius: 8px; background: transparent; cursor: pointer; text-align: center; font-weight: bold; color: #666; transition: 0.2s; }
+        .mode-btn.selected { background: white; color: var(--primary); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+
+        .test-btn { background: white; border: 2px solid #e2ddd3; padding: 15px; border-radius: 12px; text-align: left; font-size: 1.1rem; cursor: pointer; margin-bottom: 10px; font-weight: 500; transition: 0.2s; }
+        .test-btn:hover { border-color: var(--primary); }
+        .test-btn.correct { background: #d4edda; border-color: #27ae60; color: #155724; }
+        .test-btn.wrong { background: #f8d7da; border-color: #c0392b; color: #721c24; }
         
+        .input-write { width: 100%; padding: 15px; border: 2px solid #ddd; border-radius: 12px; font-size: 1.1rem; outline: none; }
+        .input-write:focus { border-color: var(--primary); }
+
         .hidden { display: none !important; }
-        .mode-switch { display: flex; gap: 10px; margin-bottom: 20px; }
-        .mode-btn { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 8px; background: white; cursor: pointer; text-align: center; }
-        .mode-btn.selected { background: var(--primary); color: white; border-color: var(--primary); }
+        
+        /* Progress Bar */
+        .progress-container { width: 100%; height: 8px; background: #ddd; border-radius: 4px; margin-bottom: 10px; overflow: hidden; }
+        .progress-fill { height: 100%; background: var(--success); width: 0%; transition: width 0.3s; }
     </style>
 </head>
 <body>
 
+<div class="container">
+
     <div id="view-home" class="view active">
-        <h2>👋 Ahoj!</h2>
-        <div class="card-box">
-            <div style="font-size:1.2rem; font-weight:bold;">🔥 Dny v řadě: <span id="home-streak">0</span></div>
+        <h2 style="margin-bottom:5px;">Dějepis SRS 2.2</h2>
+        <p style="text-align:center; margin-top:0; color:#666;">Chytré učení & Testování</p>
+        
+        <div class="card-box" style="display:flex; justify-content:space-around; text-align:center;">
+            <div>
+                <div style="font-size:1.5rem; font-weight:bold; color:var(--accent);">🔥 <span id="home-streak">0</span></div>
+                <div style="font-size:0.7rem; text-transform:uppercase;">Dní v řadě</div>
+            </div>
+            <div>
+                <div style="font-size:1.5rem; font-weight:bold; color:var(--primary);"><span id="prof-mastered">0</span></div>
+                <div style="font-size:0.7rem; text-transform:uppercase;">Umím</div>
+            </div>
         </div>
-        <h3>📚 Tvoje témata</h3>
+
+        <h3>📚 Témata</h3>
         <div id="home-deck-list"></div>
-        <button class="btn-alt" onclick="document.getElementById('file-in').click()" style="width:100%; margin-top:20px; background:#eee; color:#666;">📂 Nahrát nová data</button>
-        <input type="file" id="file-in" class="hidden" onchange="importData(event)">
+        
+        <div style="margin-top:20px; text-align:center;">
+            <button class="btn-alt" style="background:#eee; color:#666; font-size:0.8rem;" onclick="document.getElementById('file-in').click()">📂 Nahrát data</button>
+            <input type="file" id="file-in" class="hidden" onchange="importData(event)">
+            <div style="margin-top:10px; font-size:0.7rem; color:#ccc;" onclick="fullReset()">Verze 2.2 (Klikni pro reset)</div>
+        </div>
     </div>
 
     <div id="view-learn" class="view">
         <div id="learn-setup">
-            <h2>🧠 Učení (Kartičky)</h2>
-            <p>Vyber téma:</p>
+            <h2>🧠 Učení</h2>
+            <p style="text-align:center;">Vyber téma k opakování:</p>
             <div id="learn-deck-list"></div>
-            <button class="btn-main" onclick="startLearningSession()">Spustit učení 🚀</button>
+            <button class="btn-main" onclick="startLearningSession()" style="margin-top:20px;">Spustit učení 🚀</button>
         </div>
-        <div id="learn-active" class="hidden">
-            <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                <span id="learn-progress"></span>
+
+        <div id="learn-active" class="hidden" style="height:100%; display:flex; flex-direction:column;">
+            <div style="display:flex; justify-content:space-between; font-weight:bold; color:var(--primary);">
+                <span id="learn-progress">1 / 10</span>
                 <span style="cursor:pointer; color:var(--danger);" onclick="exitMode()">Ukončit</span>
             </div>
+            <div class="progress-container"><div id="learn-bar" class="progress-fill"></div></div>
+
             <div class="fc-container" onclick="flipCard()">
                 <div class="fc-card" id="fc-card">
                     <div class="fc-front">
-                        <div style="font-size:0.8rem; color:var(--accent); margin-bottom:10px;" id="fc-deck-name"></div>
+                        <div style="font-size:0.75rem; color:var(--accent); text-transform:uppercase; margin-bottom:10px; font-weight:bold;" id="fc-deck-name"></div>
                         <img id="fc-img-q" class="q-img hidden">
                         <div class="q-text" id="fc-q"></div>
                     </div>
                     <div class="fc-back">
                         <img id="fc-img-a" class="q-img hidden">
-                        <div class="q-text" id="fc-a"></div>
+                        <div id="fc-a"></div>
                     </div>
                 </div>
             </div>
-            <div style="text-align:center; margin-top:10px; color:#999; font-size:0.8rem;">Klikni pro otočení</div>
-            <div id="srs-buttons" class="hidden" style="display:grid; grid-template-columns: repeat(4, 1fr); gap:5px; margin-top:20px;">
-                <button class="btn-alt" style="background:var(--danger);" onclick="rateCard(1)">Znovu</button>
-                <button class="btn-alt" style="background:#f39c12;" onclick="rateCard(3)">Těžké</button>
-                <button class="btn-alt" style="background:#3498db;" onclick="rateCard(4)">Dobré</button>
-                <button class="btn-alt" style="background:var(--success);" onclick="rateCard(5)">Snadné</button>
+            
+            <div id="flip-hint" style="text-align:center; color:#999; font-size:0.8rem; margin-bottom:10px;">Klikni pro otočení</div>
+
+            <div id="srs-buttons" class="hidden">
+                <button class="srs-btn b-0" onclick="rateCard(1)">Znovu<span>&lt;1m</span></button>
+                <button class="srs-btn b-1" onclick="rateCard(3)">Těžké<span>10m</span></button>
+                <button class="srs-btn b-2" onclick="rateCard(4)">Dobré<span>1d</span></button>
+                <button class="srs-btn b-3" onclick="rateCard(5)">Snadné<span>4d</span></button>
             </div>
         </div>
     </div>
@@ -124,83 +182,114 @@
                 <div class="mode-btn selected" id="mode-abcd" onclick="setTestMode('abcd')">🔠 ABCD</div>
                 <div class="mode-btn" id="mode-write" onclick="setTestMode('write')">✍️ Psaní</div>
             </div>
-            <p>Vyber téma:</p>
+            
+            <p style="text-align:center;">Vyber téma:</p>
             <div id="test-deck-list"></div>
-            <p>Počet otázek:</p>
-            <select id="test-count" style="width:100%; padding:10px; border-radius:8px; margin-bottom:20px;">
-                <option value="5">5 otázek</option>
-                <option value="10">10 otázek</option>
-                <option value="15">15 otázek</option>
-            </select>
+            
+            <div style="margin-top:15px; margin-bottom:20px;">
+                <label style="font-size:0.9rem; font-weight:bold;">Počet otázek:</label>
+                <select id="test-count" style="width:100%; padding:12px; border-radius:8px; border:1px solid #ddd; background:white; font-size:1rem; margin-top:5px;">
+                    <option value="5">5 otázek (Rychlovka)</option>
+                    <option value="10">10 otázek (Standard)</option>
+                    <option value="15">15 otázek (Velký test)</option>
+                </select>
+            </div>
+            
             <button class="btn-main" onclick="startTestSession()">Spustit test</button>
         </div>
         
         <div id="test-active" class="hidden">
-            <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
-                <span id="test-progress-txt" style="font-weight:bold;"></span>
-                <span id="test-score" style="color:var(--success); font-weight:bold;">0 bodů</span>
+            <div style="display:flex; justify-content:space-between; margin-bottom:10px; font-weight:bold;">
+                <span id="test-progress-txt">1/10</span>
+                <span id="test-score" style="color:var(--success);">0 bodů</span>
             </div>
+            <div class="progress-container"><div id="test-bar" class="progress-fill"></div></div>
+
             <img id="test-img" class="q-img hidden" style="margin:0 auto; display:block;">
-            <div class="q-text" id="test-q" style="margin-bottom:20px;"></div>
+            <div class="q-text" id="test-q" style="margin-bottom:20px; text-align:center;"></div>
             
-            <div id="test-options" class="test-options hidden"></div>
+            <div id="test-options" style="display:grid; gap:10px;"></div>
             
             <div id="test-write-area" class="hidden">
                 <input type="text" id="test-input" class="input-write" placeholder="Napiš odpověď..." autocomplete="off">
-                <button class="btn-main" onclick="evaluateWrite()" style="margin-top:10px;">Zkontrolovat</button>
-                <div id="write-feedback" style="margin-top:15px; font-weight:bold;"></div>
+                <button class="btn-main" onclick="evaluateWrite()" style="margin-top:15px;">Zkontrolovat</button>
+                <div id="write-feedback" style="margin-top:15px; text-align:center; font-size:1.1rem; font-weight:bold;"></div>
             </div>
 
-            <button id="test-next-btn" class="btn-main hidden" onclick="nextTestQuestion()" style="margin-top:20px;">Další otázka ➡️</button>
+            <button id="test-next-btn" class="btn-main hidden" onclick="nextTestQuestion()" style="margin-top:20px; background:var(--accent);">Další otázka ➡️</button>
         </div>
 
-        <div id="test-result" class="hidden" style="text-align:center;">
+        <div id="test-result" class="hidden" style="text-align:center; padding-top:40px;">
             <h2>🎉 Hotovo!</h2>
-            <div style="font-size:3rem; margin:20px 0;" id="test-final-score"></div>
+            <div style="font-size:3.5rem; margin:20px 0; font-weight:bold; color:var(--primary);" id="test-final-score">100%</div>
+            <p id="test-msg" style="color:#666; margin-bottom:30px;">Skvělá práce!</p>
             <button class="btn-main" onclick="exitMode()">Zpět do menu</button>
         </div>
-    </div>
-
-    <div id="view-profile" class="view">
-        <h2>🏆 Můj profil</h2>
-        <div class="card-box">
-            <div>Celkem opakování: <b id="prof-total">0</b></div>
-            <div>Mistrovských karet: <b id="prof-mastered">0</b></div>
-        </div>
-        <button class="btn-alt" style="background:#eee; color:#333; width:100%;" onclick="fullReset()">🗑️ Resetovat všechna data</button>
     </div>
 
     <nav class="bottom-nav">
         <div class="nav-item active" onclick="switchTab('home')"><div class="nav-icon">🏠</div>Domů</div>
         <div class="nav-item" onclick="switchTab('learn')"><div class="nav-icon">🧠</div>Učení</div>
         <div class="nav-item" onclick="switchTab('test')"><div class="nav-icon">📝</div>Test</div>
-        <div class="nav-item" onclick="switchTab('profile')"><div class="nav-icon">🏆</div>Profil</div>
     </nav>
+
+</div>
 
 <script>
     const DB_NAME = "HistoryAppDB"; const DB_VERSION = 2;
     let db, decks = {}, testMode = 'abcd';
 
-    // --- START APLIKACE ---
+    // --- KOMPLETNÍ DATA PRO ZŠ (30 karet) ---
+    const INITIAL_DATA = {
+        "Arabská říše": [
+            { q: "Kdo tvořili většinu obyvatel Arabského poloostrova a jak žili?", a: ["Kočovní pastevci – beduíni.", "Žili v kmenech, které spolu často bojovaly."], year: null },
+            { q: "Co znamená v překladu slovo islám?", a: ["Odevzdanost Bohu."], year: 610 },
+            { q: "Ve kterém století se zrodil islám?", a: ["V 7. století."], year: 610 },
+            { q: "Kdo je podle islámu jediný Bůh a kdo je jeho prorok?", a: ["Bůh: Alláh.", "Prorok: Muhammad (Mohamed)."], year: null },
+            { q: "Jak se jmenuje posvátná kniha muslimů?", a: ["Korán."], year: null },
+            { q: "Vyjmenuj 5 pilířů (povinností) islámu.", a: ["Víra v jednoho Alláha", "Modlitba 5x denně", "Almužna chudým", "Půst v měsíci Ramadánu", "Pouť do Mekky"], year: null },
+            { q: "Co je to chalífát?", a: ["Jednotná arabská říše, v jejímž čele stáli chalífové (nástupci proroka)."], year: null },
+            { q: "Kam až sahala Arabská říše v době svého největšího rozmachu?", a: ["Od Atlantského oceánu přes severní Afriku až k hranicím Indie."], year: null },
+            { q: "Které dnešní evropské státy leží na Pyrenejském poloostrově, který Arabové ovládali?", a: ["Španělsko", "Portugalsko"], year: 711 },
+            { q: "Jak se jmenoval kupec, který v 10. století navštívil české země a popsal Prahu?", a: ["Ibrahim ibn Jákub."], year: 965 },
+            { q: "V jakých vědách Arabové vynikali nad tehdejší Evropou?", a: ["Matematika a fyzika", "Zeměpis", "Lékařství"], year: null },
+            { q: "Jaké nové plodiny přinesli Arabové do Evropy?", a: ["Rýže", "Bavlna", "Citrony a pomeranče"], year: null },
+            { q: "Proč jsou islámské stavby zdobeny geometrickými vzory namísto postav?", a: ["Protože Korán zakazuje zobrazovat lidské postavy."], year: null },
+            { q: "Jak se nazývá štíhlá věž u mešity?", a: ["Minaret."], year: null },
+            { q: "Které město je nejposvátnější a co je v něm uctíváno?", a: ["Město Mekka.", "Záhadný černý kámen (meteoritu) v chrámu Ka'ba."], year: null }
+        ],
+        "Slované a Sámova říše": [
+            { q: "Kdy přišli Slované na naše území?", a: ["V 5. až 6. století.", "V rámci tzv. druhé vlny stěhování národů."], year: 550 },
+            { q: "Kde byla původní pravlast Slovanů?", a: ["Ve východní Evropě.", "Mezi řekami Vislou a Dněprem."], year: null },
+            { q: "Do kterých tří směrů se Slované vydali z pravlasti?", a: ["Na jih (Balkán), na západ (střední Evropa) a na východ."], year: null },
+            { q: "Jak se nazýval typický slovanský dům?", a: ["Polozemnice.", "Částečně zahloubená chata."], year: null },
+            { q: "V čem spočívalo dvojpolní hospodářství?", a: ["Pole se rozdělilo: polovina se osela, druhá odpočívala (úhor)."], year: null },
+            { q: "V co věřili staří Slované před přijetím křesťanství?", a: ["Byli pohané.", "Uctívali přírodní síly (např. Perun)."], year: null },
+            { q: "Kdo byl Sámo?", a: ["Francký kupec.", "Slované si ho zvolili za vůdce."], year: 623 },
+            { q: "Proč vznikla Sámova říše?", a: ["Jako obrana proti Avarům a Frankům."], year: 623 },
+            { q: "Ve kterém století existovala Sámova říše?", a: ["V 7. století."], year: 623 },
+            { q: "Jak se jmenovala vítězná bitva Slovanů proti Frankům roku 631?", a: ["Bitva u Wogastisburgu."], year: 631 },
+            { q: "Kterého franského krále Sámo porazil v bitvě u Wogastisburgu?", a: ["Dagoberta I."], year: 631 },
+            { q: "Který jediný písemný pramen nás informuje o Sámově říši?", a: ["Fredegarova kronika."], year: 660 },
+            { q: "Co se stalo s říší po Sámově smrti?", a: ["Rozpadla se a zanikla."], year: 658 },
+            { q: "Které řemeslné předměty se dochovaly v hrobech?", a: ["Šperky, zbraně, ostruhy, nástroje."], year: null },
+            { q: "Vyjmenuj první slovanské státy.", a: ["Velká Morava, Bulharsko, Polsko, Kyjevská Rus."], year: 833 }
+        ]
+    };
+
+    // --- START ---
     async function init() {
         await dbOpen();
         decks = await dbLoad() || {};
-        // Startovací data, pokud je prázdno
+        
+        // Pokud je DB prázdná, nahrajeme data
         if (Object.keys(decks).length === 0) {
-            const initial = {
-                "Arabská říše": [
-                    { q: "Co znamená islám?", a: ["Odevzdanost Bohu"], year: 610 },
-                    { q: "Kdy byla hidžra?", a: ["622"], year: 622 },
-                    { q: "Svatá kniha muslimů?", a: ["Korán"], year: null },
-                    { q: "Vyjmenuj 5 pilířů islámu", a: ["Víra", "Modlitba", "Almužna", "Půst", "Pouť"], year: null }
-                ]
-            };
-            for (let [name, cards] of Object.entries(initial)) {
+            for (let [name, cards] of Object.entries(INITIAL_DATA)) {
                 decks[name] = cards.map((c, i) => ({ ...c, id: Date.now()+i, deck: name, reps: 0, interval: 0, ef: 2.5, nextReview: Date.now() }));
             }
             await dbSave(decks);
         }
-        renderHome(); renderStats();
+        renderHome();
     }
 
     // --- DB UTILS ---
@@ -220,14 +309,23 @@
 
     function renderHome() {
         const list = document.getElementById('home-deck-list'); list.innerHTML = "";
-        Object.keys(decks).forEach(n => list.innerHTML += `<div class="deck-item" onclick="switchTab('learn')"><b>${n}</b><span>${decks[n].length} karet</span></div>`);
+        let masterCount = 0, totalCount = 0;
+        
+        Object.keys(decks).forEach(n => {
+            const cnt = decks[n].length;
+            totalCount += cnt;
+            masterCount += decks[n].filter(c => c.interval > 14).length;
+            list.innerHTML += `<div class="deck-item" onclick="switchTab('learn')"><span>${n}</span> <span style="color:#999; font-size:0.9rem;">${cnt} karet</span></div>`;
+        });
+
         const stats = JSON.parse(localStorage.getItem('hist_stats')) || {streak:0};
         document.getElementById('home-streak').innerText = stats.streak;
+        document.getElementById('prof-mastered').innerText = Math.round((masterCount/totalCount)*100 || 0) + "%";
     }
 
     function renderDeckSelect(mode) {
         const list = document.getElementById(mode+'-deck-list'); list.innerHTML = "";
-        Object.keys(decks).forEach(n => list.innerHTML += `<div class="deck-item"><label style="flex:1; display:flex; align-items:center;"><input type="checkbox" name="${mode}-deck" value="${n}" style="transform:scale(1.5); margin-right:15px;"> ${n}</label></div>`);
+        Object.keys(decks).forEach(n => list.innerHTML += `<div class="deck-item"><label style="flex:1; display:flex; align-items:center; cursor:pointer;"><input type="checkbox" name="${mode}-deck" value="${n}" style="transform:scale(1.5); margin-right:15px;"> ${n}</label></div>`);
     }
 
     function exitMode() {
@@ -239,13 +337,18 @@
         switchTab('home');
     }
 
-    // --- UČENÍ ---
+    // --- UČENÍ (VAŠE SRS LOGIKA - HNED, 10min, 1d, 4d) ---
     let learnQ = [], currCard = null;
+    
     function startLearningSession() {
         const sel = Array.from(document.querySelectorAll('input[name="learn-deck"]:checked')).map(i=>i.value);
         if(!sel.length) return alert("Vyber téma!");
         learnQ = []; sel.forEach(n => learnQ.push(...decks[n].filter(c => c.nextReview <= Date.now())));
         if(!learnQ.length) return alert("Vše umíš! Zkus to zítra.");
+        
+        // Zamíchat
+        learnQ.sort(() => Math.random() - 0.5);
+        
         document.getElementById('learn-setup').classList.add('hidden');
         document.getElementById('learn-active').classList.remove('hidden');
         nextLearnCard();
@@ -254,32 +357,73 @@
     function nextLearnCard() {
         if(!learnQ.length) return exitMode();
         currCard = learnQ[0];
+        
+        // Reset
         document.getElementById('fc-card').classList.remove('flipped');
         document.getElementById('srs-buttons').classList.add('hidden');
+        document.getElementById('flip-hint').classList.remove('hidden');
+        
+        // Obsah
         document.getElementById('fc-deck-name').innerText = currCard.deck;
         document.getElementById('fc-q').innerText = currCard.q;
-        document.getElementById('fc-a').innerHTML = Array.isArray(currCard.a) ? "• " + currCard.a.join("<br>• ") : currCard.a;
         
+        // Odpověď (seznam)
+        const aContent = Array.isArray(currCard.a) ? 
+            currCard.a.map(i => `<div class="a-item"><span class="a-bullet">•</span><span>${i}</span></div>`).join('') : 
+            `<div class="a-item"><span class="a-bullet">•</span><span>${currCard.a}</span></div>`;
+        document.getElementById('fc-a').innerHTML = `<div class="a-list">${aContent}</div>`;
+        
+        // Obrázky
         const imgQ = document.getElementById('fc-img-q');
         if(currCard.qImg) { imgQ.src = currCard.qImg; imgQ.classList.remove('hidden'); } else imgQ.classList.add('hidden');
-        
         const imgA = document.getElementById('fc-img-a');
         if(currCard.aImg) { imgA.src = currCard.aImg; imgA.classList.remove('hidden'); } else imgA.classList.add('hidden');
 
         document.getElementById('learn-progress').innerText = `Zbývá: ${learnQ.length}`;
+        const total = document.querySelectorAll('input[name="learn-deck"]:checked').length * 15; // Odhad
+        document.getElementById('learn-bar').style.width = Math.min(100, 100 - (learnQ.length/10)*100) + "%"; // Jen vizuální efekt
     }
 
-    window.flipCard = () => { document.getElementById('fc-card').classList.add('flipped'); document.getElementById('srs-buttons').classList.remove('hidden'); };
+    window.flipCard = () => { 
+        document.getElementById('fc-card').classList.add('flipped'); 
+        document.getElementById('srs-buttons').classList.remove('hidden');
+        document.getElementById('flip-hint').classList.add('hidden');
+    };
+
+    // --- VAŠE SRS LOGIKA (Fixed) ---
     window.rateCard = (q) => {
         const c = currCard;
-        if(q<3) { c.reps=0; c.interval=0; learnQ.push(learnQ.shift()); }
-        else { c.reps++; c.interval = c.reps===1?1:(c.reps===2?6:Math.round(c.interval*c.ef)); c.ef += (0.1-(5-q)*(0.08+(5-q)*0.02)); if(c.ef<1.3)c.ef=1.3; c.nextReview=Date.now()+(c.interval*86400000); learnQ.shift(); }
-        const idx = decks[c.deck].findIndex(x=>x.id===c.id); decks[c.deck][idx]=c; dbSave(decks);
-        let stats = JSON.parse(localStorage.getItem('hist_stats'))||{streak:0,total:0}; stats.total++; localStorage.setItem('hist_stats', JSON.stringify(stats));
+        // Statistiky
+        let stats = JSON.parse(localStorage.getItem('hist_stats'))||{streak:0, last:''};
+        const today = new Date().toDateString();
+        if(stats.last !== today) { stats.streak++; stats.last = today; localStorage.setItem('hist_stats', JSON.stringify(stats)); }
+
+        // Algoritmus ZŠ: Znovu(hned), 10min, 1den, 4dny
+        if(q < 3) { 
+            c.reps = 0; c.interval = 0; c.nextReview = Date.now();
+            learnQ.push(learnQ.shift()); // Přesunout na konec fronty (hned)
+        } else {
+            if(c.reps === 0) {
+                if(q === 3) c.interval = 0.007; // ~10 min
+                else if(q === 4) c.interval = 1; // 1 den
+                else c.interval = 4; // 4 dny
+            } else {
+                // Další opakování: interval * efektivita
+                if(c.interval < 0.01) c.interval = 1;
+                else c.interval = Math.round(c.interval * c.ef);
+            }
+            c.reps++;
+            c.ef = Math.max(1.3, c.ef + (0.1 - (5-q)*(0.08 + (5-q)*0.02)));
+            c.nextReview = Date.now() + (c.interval * 86400000);
+            
+            // Uložit a odebrat z fronty
+            const idx = decks[c.deck].findIndex(x=>x.id===c.id); decks[c.deck][idx]=c; dbSave(decks);
+            learnQ.shift();
+        }
         nextLearnCard();
     }
 
-    // --- TESTOVÁNÍ ---
+    // --- TESTOVÁNÍ (ABCD + Write) ---
     let testQ = [], testScore = 0, testIdx = 0;
     function setTestMode(m) { testMode = m; document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('selected')); document.getElementById('mode-'+m).classList.add('selected'); }
 
@@ -287,9 +431,12 @@
         const sel = Array.from(document.querySelectorAll('input[name="test-deck"]:checked')).map(i=>i.value);
         if(!sel.length) return alert("Vyber téma!");
         const limit = parseInt(document.getElementById('test-count').value);
+        
         let pool = []; sel.forEach(n => pool.push(...decks[n]));
         pool.sort(()=>Math.random()-0.5);
-        testQ = pool.slice(0, limit); testScore = 0; testIdx = 0;
+        testQ = pool.slice(0, limit); 
+        testScore = 0; testIdx = 0;
+        
         document.getElementById('test-setup').classList.add('hidden');
         document.getElementById('test-active').classList.remove('hidden');
         renderTestQ();
@@ -300,17 +447,18 @@
         const c = testQ[testIdx];
         document.getElementById('test-q').innerText = c.q;
         document.getElementById('test-progress-txt').innerText = `${testIdx+1}/${testQ.length}`;
+        document.getElementById('test-bar').style.width = ((testIdx)/testQ.length)*100 + "%";
         document.getElementById('test-next-btn').classList.add('hidden');
         
         const img = document.getElementById('test-img');
         if(c.qImg) { img.src = c.qImg; img.classList.remove('hidden'); } else img.classList.add('hidden');
 
         if(testMode === 'abcd') {
-            document.getElementById('test-options').classList.remove('hidden');
+            document.getElementById('test-options').style.display = 'grid';
             document.getElementById('test-write-area').classList.add('hidden');
             const container = document.getElementById('test-options'); container.innerHTML = "";
             
-            // Logika ABCD: Náhodný zástupce
+            // Náhodný zástupce
             const correctTxt = Array.isArray(c.a) ? c.a[Math.floor(Math.random()*c.a.length)] : c.a;
             // Distraktory
             const others = decks[c.deck].filter(x=>x.id!==c.id);
@@ -331,12 +479,12 @@
                 container.appendChild(b);
             });
         } else {
-            // Režim PSANÍ
-            document.getElementById('test-options').classList.add('hidden');
+            document.getElementById('test-options').style.display = 'none';
             document.getElementById('test-write-area').classList.remove('hidden');
             document.getElementById('test-input').value = "";
-            document.getElementById('write-feedback').innerText = "";
             document.getElementById('test-input').disabled = false;
+            document.getElementById('write-feedback').innerText = "";
+            document.getElementById('test-input').focus();
         }
     }
 
@@ -346,16 +494,15 @@
         const c = testQ[testIdx];
         const correctArr = Array.isArray(c.a) ? c.a : [c.a];
         
-        // Soft match (bez diakritiky)
         const norm = s => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
         const isOk = correctArr.some(ans => norm(ans.toLowerCase()).includes(norm(val)) && val.length > 2);
 
         const fb = document.getElementById('write-feedback');
         if(isOk) {
-            fb.innerHTML = "<span style='color:green'>Správně!</span>";
+            fb.innerHTML = "<span style='color:var(--success)'>Správně!</span>";
             testScore++;
         } else {
-            fb.innerHTML = "<span style='color:red'>Chyba.</span> Správně: " + correctArr.join(", ");
+            fb.innerHTML = "<span style='color:var(--danger)'>Chyba.</span><br><span style='font-size:0.9rem; font-weight:normal'>Správně: " + correctArr.join(", ") + "</span>";
         }
         inp.disabled = true;
         document.getElementById('test-score').innerText = testScore + " bodů";
@@ -370,37 +517,27 @@
         document.getElementById('test-final-score').innerText = Math.round((testScore/testQ.length)*100)+"%";
     }
 
-    // --- IMPORT/EXPORT ---
-    function renderStats() {
-        const stats = JSON.parse(localStorage.getItem('hist_stats'))||{total:0};
-        document.getElementById('prof-total').innerText = stats.total;
-        let mast = 0; Object.values(decks).forEach(d=>mast+=d.filter(c=>c.interval>21).length);
-        document.getElementById('prof-mastered').innerText = mast;
-    }
-    
-    function fullReset() { if(confirm("Smazat vše?")) { indexedDB.deleteDatabase(DB_NAME); localStorage.clear(); location.reload(); } }
-    
+    // --- IMPORT ---
     function importData(e) {
         const f = e.target.files[0]; if(!f)return;
         const r = new FileReader();
         r.onload = async (v) => {
             try {
                 const d = JSON.parse(v.target.result);
-                // Detekce formátu - pokud je to pole, je to starý export -> zeptáme se na jméno
-                if(Array.isArray(d)) {
-                    const n = prompt("Jak pojmenovat tento balíček?");
-                    if(n) { 
-                        // Konverze starého formátu na nový objekt
-                        decks[n] = d.map(c => ({...c, deck:n, id: c.id || Date.now()+Math.random(), reps:0, interval:0, ef:2.5, nextReview:Date.now()}));
-                    }
-                } else {
-                    // Nový formát (objekt) - sloučíme
-                    decks = {...decks, ...d};
-                }
+                if(Array.isArray(d)) { const n = prompt("Jak pojmenovat tento balíček?"); if(n) { decks[n] = d.map(c => ({...c, deck:n, id: c.id || Date.now()+Math.random(), reps:0, interval:0, ef:2.5, nextReview:Date.now()})); }} 
+                else { decks = {...decks, ...d}; }
                 await dbSave(decks); alert("Hotovo!"); renderHome();
             } catch(err) { alert("Chyba dat"); }
         };
         r.readAsText(f);
+    }
+
+    function fullReset() {
+        if(confirm("Opravdu vymazat data a začít znovu?")) {
+            indexedDB.deleteDatabase(DB_NAME);
+            localStorage.clear();
+            location.reload();
+        }
     }
 
     if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');

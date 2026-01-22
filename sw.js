@@ -1,10 +1,10 @@
-const CACHE_NAME = 'dejepis-app-v2.1'; // Změna verze pro vynucení aktualizace
+const CACHE_NAME = 'dejepis-app-v2.2'; // Zvýšeno na v2.2
 const ASSETS = [
   './',
   './index.html',
   './manifest.json',
-  './history.png',   // Vaše ikona
-  './favicon.ico'    // Vaše ikona
+  './history.png',
+  './favicon.ico'
 ];
 
 self.addEventListener('install', (e) => {
@@ -18,7 +18,7 @@ self.addEventListener('activate', (e) => {
       return Promise.all(
         keys.map((key) => {
           if (key !== CACHE_NAME) {
-            return caches.delete(key); // Smaže starou verzi cache
+            return caches.delete(key);
           }
         })
       );
