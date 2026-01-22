@@ -2,36 +2,409 @@
 <html lang="cs">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dějepis - Výukový portál</title>
-    <link rel="stylesheet" href="style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <meta name="theme-color" content="#fdfbf7">
+    <title>Dějepis Super-App</title>
+    <style>
+        :root {
+            --primary: #1a3a5a; --accent: #e67e22; --bg: #fdfbf7;
+            --card-front: #ffffff; --success: #27ae60; --danger: #e74c3c;
+            --nav-height: 70px;
+        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: var(--bg); margin: 0; height: 100vh;
+            display: flex; flex-direction: column; color: #2c3e50; overflow: hidden;
+        }
+
+        /* --- HLAVNÍ BLOKY --- */
+        .view { flex: 1; overflow-y: auto; padding: 20px; padding-bottom: 90px; display: none; }
+        .view.active { display: block; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* --- NAVIGACE --- */
+        .bottom-nav {
+            position: fixed; bottom: 0; left: 0; width: 100%; height: var(--nav-height);
+            background: white; border-top: 1px solid #ddd;
+            display: flex; justify-content: space-around; align-items: center;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.05); z-index: 1000;
+        }
+        .nav-item {
+            display: flex; flex-direction: column; align-items: center;
+            color: #999; font-size: 0.75rem; cursor: pointer;
+            width: 100%; height: 100%; justify-content: center;
+        }
+        .nav-item.active { color: var(--primary); font-weight: bold; }
+        .nav-icon { font-size: 1.5rem; margin-bottom: 3px; }
+
+        /* --- UI PRVKY --- */
+        h2 { color: var(--primary); margin-top: 0; }
+        .card-box { background: white; padding: 20px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 15px; }
+        .btn-main { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 12px; width: 100%; font-weight: bold; font-size: 1.1rem; cursor: pointer; margin-top: 10px; }
+        .btn-alt { background: var(--accent); color: white; border: none; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .deck-item { display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px; border-radius: 12px; margin-bottom: 10px; border: 1px solid #eee; cursor: pointer; }
+        
+        /* --- UČENÍ (FLIP) --- */
+        .fc-container { perspective: 1000px; height: 350px; cursor: pointer; }
+        .fc-card { position: relative; width: 100%; height: 100%; transition: transform 0.6s; transform-style: preserve-3d; }
+        .fc-card.flipped { transform: rotateY(180deg); }
+        .fc-front, .fc-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 20px; padding: 20px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; box-shadow: 0 8px 20px rgba(0,0,0,0.1); background: white; border: 1px solid #eee; overflow-y: auto; }
+        .fc-back { background: var(--primary); color: white; transform: rotateY(180deg); }
+        .q-img { max-height: 120px; border-radius: 8px; margin-bottom: 10px; object-fit: contain; }
+        .q-text { font-size: 1.3rem; font-weight: bold; }
+
+        /* --- TESTOVÁNÍ --- */
+        .test-options { display: grid; gap: 10px; }
+        .test-btn { background: white; border: 2px solid #ddd; padding: 15px; border-radius: 12px; text-align: left; font-size: 1rem; cursor: pointer; }
+        .test-btn.correct { background: #d4edda; border-color: #28a745; color: #155724; }
+        .test-btn.wrong { background: #f8d7da; border-color: #dc3545; color: #721c24; }
+        .input-write { width: 100%; padding: 15px; border: 2px solid #ddd; border-radius: 12px; font-size: 1.1rem; }
+        
+        .hidden { display: none !important; }
+        .mode-switch { display: flex; gap: 10px; margin-bottom: 20px; }
+        .mode-btn { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 8px; background: white; cursor: pointer; text-align: center; }
+        .mode-btn.selected { background: var(--primary); color: white; border-color: var(--primary); }
+    </style>
 </head>
 <body>
-    <div class="portal-container">
-        <h1>🏛️ Dějepis hrou</h1>
-        <p class="subtitle">Vyber si, co chceš dělat:</p>
-        
-        <div class="menu-grid">
-            <a href="uceni/" class="portal-card">
-                <div class="icon">🧠</div>
-                <div class="text">
-                    <h2>Učení (Kartičky)</h2>
-                    <p>Opakování metodou SRS</p>
+
+    <div id="view-home" class="view active">
+        <h2>👋 Ahoj!</h2>
+        <div class="card-box">
+            <div style="font-size:1.2rem; font-weight:bold;">🔥 Dny v řadě: <span id="home-streak">0</span></div>
+        </div>
+        <h3>📚 Tvoje témata</h3>
+        <div id="home-deck-list"></div>
+        <button class="btn-alt" onclick="document.getElementById('file-in').click()" style="width:100%; margin-top:20px; background:#eee; color:#666;">📂 Nahrát nová data</button>
+        <input type="file" id="file-in" class="hidden" onchange="importData(event)">
+    </div>
+
+    <div id="view-learn" class="view">
+        <div id="learn-setup">
+            <h2>🧠 Učení (Kartičky)</h2>
+            <p>Vyber téma:</p>
+            <div id="learn-deck-list"></div>
+            <button class="btn-main" onclick="startLearningSession()">Spustit učení 🚀</button>
+        </div>
+        <div id="learn-active" class="hidden">
+            <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                <span id="learn-progress"></span>
+                <span style="cursor:pointer; color:var(--danger);" onclick="exitMode()">Ukončit</span>
+            </div>
+            <div class="fc-container" onclick="flipCard()">
+                <div class="fc-card" id="fc-card">
+                    <div class="fc-front">
+                        <div style="font-size:0.8rem; color:var(--accent); margin-bottom:10px;" id="fc-deck-name"></div>
+                        <img id="fc-img-q" class="q-img hidden">
+                        <div class="q-text" id="fc-q"></div>
+                    </div>
+                    <div class="fc-back">
+                        <img id="fc-img-a" class="q-img hidden">
+                        <div class="q-text" id="fc-a"></div>
+                    </div>
                 </div>
-            </a>
-            
-            <a href="test/" class="portal-card">
-                <div class="icon">📝</div>
-                <div class="text">
-                    <h2>Testování</h2>
-                    <p>Vygenerovat písemku</p>
-                </div>
-            </a>
+            </div>
+            <div style="text-align:center; margin-top:10px; color:#999; font-size:0.8rem;">Klikni pro otočení</div>
+            <div id="srs-buttons" class="hidden" style="display:grid; grid-template-columns: repeat(4, 1fr); gap:5px; margin-top:20px;">
+                <button class="btn-alt" style="background:var(--danger);" onclick="rateCard(1)">Znovu</button>
+                <button class="btn-alt" style="background:#f39c12;" onclick="rateCard(3)">Těžké</button>
+                <button class="btn-alt" style="background:#3498db;" onclick="rateCard(4)">Dobré</button>
+                <button class="btn-alt" style="background:var(--success);" onclick="rateCard(5)">Snadné</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="view-test" class="view">
+        <div id="test-setup">
+            <h2>📝 Testování</h2>
+            <div class="mode-switch">
+                <div class="mode-btn selected" id="mode-abcd" onclick="setTestMode('abcd')">🔠 ABCD</div>
+                <div class="mode-btn" id="mode-write" onclick="setTestMode('write')">✍️ Psaní</div>
+            </div>
+            <p>Vyber téma:</p>
+            <div id="test-deck-list"></div>
+            <p>Počet otázek:</p>
+            <select id="test-count" style="width:100%; padding:10px; border-radius:8px; margin-bottom:20px;">
+                <option value="5">5 otázek</option>
+                <option value="10">10 otázek</option>
+                <option value="15">15 otázek</option>
+            </select>
+            <button class="btn-main" onclick="startTestSession()">Spustit test</button>
         </div>
         
-        <footer style="margin-top: 50px; color: #888; font-size: 0.8rem;">
-            Verze 2.0 | Kompatibilní data
-        </footer>
+        <div id="test-active" class="hidden">
+            <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                <span id="test-progress-txt" style="font-weight:bold;"></span>
+                <span id="test-score" style="color:var(--success); font-weight:bold;">0 bodů</span>
+            </div>
+            <img id="test-img" class="q-img hidden" style="margin:0 auto; display:block;">
+            <div class="q-text" id="test-q" style="margin-bottom:20px;"></div>
+            
+            <div id="test-options" class="test-options hidden"></div>
+            
+            <div id="test-write-area" class="hidden">
+                <input type="text" id="test-input" class="input-write" placeholder="Napiš odpověď..." autocomplete="off">
+                <button class="btn-main" onclick="evaluateWrite()" style="margin-top:10px;">Zkontrolovat</button>
+                <div id="write-feedback" style="margin-top:15px; font-weight:bold;"></div>
+            </div>
+
+            <button id="test-next-btn" class="btn-main hidden" onclick="nextTestQuestion()" style="margin-top:20px;">Další otázka ➡️</button>
+        </div>
+
+        <div id="test-result" class="hidden" style="text-align:center;">
+            <h2>🎉 Hotovo!</h2>
+            <div style="font-size:3rem; margin:20px 0;" id="test-final-score"></div>
+            <button class="btn-main" onclick="exitMode()">Zpět do menu</button>
+        </div>
     </div>
+
+    <div id="view-profile" class="view">
+        <h2>🏆 Můj profil</h2>
+        <div class="card-box">
+            <div>Celkem opakování: <b id="prof-total">0</b></div>
+            <div>Mistrovských karet: <b id="prof-mastered">0</b></div>
+        </div>
+        <button class="btn-alt" style="background:#eee; color:#333; width:100%;" onclick="fullReset()">🗑️ Resetovat všechna data</button>
+    </div>
+
+    <nav class="bottom-nav">
+        <div class="nav-item active" onclick="switchTab('home')"><div class="nav-icon">🏠</div>Domů</div>
+        <div class="nav-item" onclick="switchTab('learn')"><div class="nav-icon">🧠</div>Učení</div>
+        <div class="nav-item" onclick="switchTab('test')"><div class="nav-icon">📝</div>Test</div>
+        <div class="nav-item" onclick="switchTab('profile')"><div class="nav-icon">🏆</div>Profil</div>
+    </nav>
+
+<script>
+    const DB_NAME = "HistoryAppDB"; const DB_VERSION = 2;
+    let db, decks = {}, testMode = 'abcd';
+
+    // --- START APLIKACE ---
+    async function init() {
+        await dbOpen();
+        decks = await dbLoad() || {};
+        // Startovací data, pokud je prázdno
+        if (Object.keys(decks).length === 0) {
+            const initial = {
+                "Arabská říše": [
+                    { q: "Co znamená islám?", a: ["Odevzdanost Bohu"], year: 610 },
+                    { q: "Kdy byla hidžra?", a: ["622"], year: 622 },
+                    { q: "Svatá kniha muslimů?", a: ["Korán"], year: null },
+                    { q: "Vyjmenuj 5 pilířů islámu", a: ["Víra", "Modlitba", "Almužna", "Půst", "Pouť"], year: null }
+                ]
+            };
+            for (let [name, cards] of Object.entries(initial)) {
+                decks[name] = cards.map((c, i) => ({ ...c, id: Date.now()+i, deck: name, reps: 0, interval: 0, ef: 2.5, nextReview: Date.now() }));
+            }
+            await dbSave(decks);
+        }
+        renderHome(); renderStats();
+    }
+
+    // --- DB UTILS ---
+    async function dbOpen() { return new Promise(r => { const req = indexedDB.open(DB_NAME, DB_VERSION); req.onupgradeneeded = e => e.target.result.createObjectStore("store"); req.onsuccess = e => { db = e.target.result; r(); }; }); }
+    async function dbSave(d) { const tx = db.transaction("store", "readwrite"); tx.objectStore("store").put(d, "decks"); }
+    async function dbLoad() { return new Promise(r => { const tx = db.transaction("store", "readonly"); const req = tx.objectStore("store").get("decks"); req.onsuccess = () => r(req.result); }); }
+
+    // --- NAVIGACE ---
+    function switchTab(id) {
+        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+        document.getElementById('view-'+id).classList.add('active');
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        document.querySelector(`.nav-item[onclick="switchTab('${id}')"]`).classList.add('active');
+        if(id === 'home') renderHome();
+        if(id === 'learn' || id === 'test') renderDeckSelect(id);
+    }
+
+    function renderHome() {
+        const list = document.getElementById('home-deck-list'); list.innerHTML = "";
+        Object.keys(decks).forEach(n => list.innerHTML += `<div class="deck-item" onclick="switchTab('learn')"><b>${n}</b><span>${decks[n].length} karet</span></div>`);
+        const stats = JSON.parse(localStorage.getItem('hist_stats')) || {streak:0};
+        document.getElementById('home-streak').innerText = stats.streak;
+    }
+
+    function renderDeckSelect(mode) {
+        const list = document.getElementById(mode+'-deck-list'); list.innerHTML = "";
+        Object.keys(decks).forEach(n => list.innerHTML += `<div class="deck-item"><label style="flex:1; display:flex; align-items:center;"><input type="checkbox" name="${mode}-deck" value="${n}" style="transform:scale(1.5); margin-right:15px;"> ${n}</label></div>`);
+    }
+
+    function exitMode() {
+        document.getElementById('learn-active').classList.add('hidden');
+        document.getElementById('test-active').classList.add('hidden');
+        document.getElementById('test-result').classList.add('hidden');
+        document.getElementById('learn-setup').classList.remove('hidden');
+        document.getElementById('test-setup').classList.remove('hidden');
+        switchTab('home');
+    }
+
+    // --- UČENÍ ---
+    let learnQ = [], currCard = null;
+    function startLearningSession() {
+        const sel = Array.from(document.querySelectorAll('input[name="learn-deck"]:checked')).map(i=>i.value);
+        if(!sel.length) return alert("Vyber téma!");
+        learnQ = []; sel.forEach(n => learnQ.push(...decks[n].filter(c => c.nextReview <= Date.now())));
+        if(!learnQ.length) return alert("Vše umíš! Zkus to zítra.");
+        document.getElementById('learn-setup').classList.add('hidden');
+        document.getElementById('learn-active').classList.remove('hidden');
+        nextLearnCard();
+    }
+
+    function nextLearnCard() {
+        if(!learnQ.length) return exitMode();
+        currCard = learnQ[0];
+        document.getElementById('fc-card').classList.remove('flipped');
+        document.getElementById('srs-buttons').classList.add('hidden');
+        document.getElementById('fc-deck-name').innerText = currCard.deck;
+        document.getElementById('fc-q').innerText = currCard.q;
+        document.getElementById('fc-a').innerHTML = Array.isArray(currCard.a) ? "• " + currCard.a.join("<br>• ") : currCard.a;
+        
+        const imgQ = document.getElementById('fc-img-q');
+        if(currCard.qImg) { imgQ.src = currCard.qImg; imgQ.classList.remove('hidden'); } else imgQ.classList.add('hidden');
+        
+        const imgA = document.getElementById('fc-img-a');
+        if(currCard.aImg) { imgA.src = currCard.aImg; imgA.classList.remove('hidden'); } else imgA.classList.add('hidden');
+
+        document.getElementById('learn-progress').innerText = `Zbývá: ${learnQ.length}`;
+    }
+
+    window.flipCard = () => { document.getElementById('fc-card').classList.add('flipped'); document.getElementById('srs-buttons').classList.remove('hidden'); };
+    window.rateCard = (q) => {
+        const c = currCard;
+        if(q<3) { c.reps=0; c.interval=0; learnQ.push(learnQ.shift()); }
+        else { c.reps++; c.interval = c.reps===1?1:(c.reps===2?6:Math.round(c.interval*c.ef)); c.ef += (0.1-(5-q)*(0.08+(5-q)*0.02)); if(c.ef<1.3)c.ef=1.3; c.nextReview=Date.now()+(c.interval*86400000); learnQ.shift(); }
+        const idx = decks[c.deck].findIndex(x=>x.id===c.id); decks[c.deck][idx]=c; dbSave(decks);
+        let stats = JSON.parse(localStorage.getItem('hist_stats'))||{streak:0,total:0}; stats.total++; localStorage.setItem('hist_stats', JSON.stringify(stats));
+        nextLearnCard();
+    }
+
+    // --- TESTOVÁNÍ ---
+    let testQ = [], testScore = 0, testIdx = 0;
+    function setTestMode(m) { testMode = m; document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('selected')); document.getElementById('mode-'+m).classList.add('selected'); }
+
+    function startTestSession() {
+        const sel = Array.from(document.querySelectorAll('input[name="test-deck"]:checked')).map(i=>i.value);
+        if(!sel.length) return alert("Vyber téma!");
+        const limit = parseInt(document.getElementById('test-count').value);
+        let pool = []; sel.forEach(n => pool.push(...decks[n]));
+        pool.sort(()=>Math.random()-0.5);
+        testQ = pool.slice(0, limit); testScore = 0; testIdx = 0;
+        document.getElementById('test-setup').classList.add('hidden');
+        document.getElementById('test-active').classList.remove('hidden');
+        renderTestQ();
+    }
+
+    function renderTestQ() {
+        if(testIdx >= testQ.length) return finishTest();
+        const c = testQ[testIdx];
+        document.getElementById('test-q').innerText = c.q;
+        document.getElementById('test-progress-txt').innerText = `${testIdx+1}/${testQ.length}`;
+        document.getElementById('test-next-btn').classList.add('hidden');
+        
+        const img = document.getElementById('test-img');
+        if(c.qImg) { img.src = c.qImg; img.classList.remove('hidden'); } else img.classList.add('hidden');
+
+        if(testMode === 'abcd') {
+            document.getElementById('test-options').classList.remove('hidden');
+            document.getElementById('test-write-area').classList.add('hidden');
+            const container = document.getElementById('test-options'); container.innerHTML = "";
+            
+            // Logika ABCD: Náhodný zástupce
+            const correctTxt = Array.isArray(c.a) ? c.a[Math.floor(Math.random()*c.a.length)] : c.a;
+            // Distraktory
+            const others = decks[c.deck].filter(x=>x.id!==c.id);
+            let bads = [];
+            others.forEach(o => { if(Array.isArray(o.a)) bads.push(...o.a); else bads.push(o.a); });
+            bads = [...new Set(bads)].sort(()=>Math.random()-0.5).slice(0,3);
+            
+            let opts = [{t:correctTxt, ok:true}, ...bads.map(b=>({t:b, ok:false}))].sort(()=>Math.random()-0.5);
+            
+            opts.forEach(o => {
+                const b = document.createElement('div'); b.className = 'test-btn'; b.innerText = o.t;
+                b.onclick = () => {
+                    document.querySelectorAll('.test-btn').forEach(x=>x.style.pointerEvents='none');
+                    if(o.ok) { b.classList.add('correct'); testScore++; } else { b.classList.add('wrong'); }
+                    document.getElementById('test-score').innerText = testScore + " bodů";
+                    document.getElementById('test-next-btn').classList.remove('hidden');
+                };
+                container.appendChild(b);
+            });
+        } else {
+            // Režim PSANÍ
+            document.getElementById('test-options').classList.add('hidden');
+            document.getElementById('test-write-area').classList.remove('hidden');
+            document.getElementById('test-input').value = "";
+            document.getElementById('write-feedback').innerText = "";
+            document.getElementById('test-input').disabled = false;
+        }
+    }
+
+    function evaluateWrite() {
+        const inp = document.getElementById('test-input');
+        const val = inp.value.trim().toLowerCase();
+        const c = testQ[testIdx];
+        const correctArr = Array.isArray(c.a) ? c.a : [c.a];
+        
+        // Soft match (bez diakritiky)
+        const norm = s => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        const isOk = correctArr.some(ans => norm(ans.toLowerCase()).includes(norm(val)) && val.length > 2);
+
+        const fb = document.getElementById('write-feedback');
+        if(isOk) {
+            fb.innerHTML = "<span style='color:green'>Správně!</span>";
+            testScore++;
+        } else {
+            fb.innerHTML = "<span style='color:red'>Chyba.</span> Správně: " + correctArr.join(", ");
+        }
+        inp.disabled = true;
+        document.getElementById('test-score').innerText = testScore + " bodů";
+        document.getElementById('test-next-btn').classList.remove('hidden');
+    }
+
+    function nextTestQuestion() { testIdx++; renderTestQ(); }
+
+    function finishTest() {
+        document.getElementById('test-active').classList.add('hidden');
+        document.getElementById('test-result').classList.remove('hidden');
+        document.getElementById('test-final-score').innerText = Math.round((testScore/testQ.length)*100)+"%";
+    }
+
+    // --- IMPORT/EXPORT ---
+    function renderStats() {
+        const stats = JSON.parse(localStorage.getItem('hist_stats'))||{total:0};
+        document.getElementById('prof-total').innerText = stats.total;
+        let mast = 0; Object.values(decks).forEach(d=>mast+=d.filter(c=>c.interval>21).length);
+        document.getElementById('prof-mastered').innerText = mast;
+    }
+    
+    function fullReset() { if(confirm("Smazat vše?")) { indexedDB.deleteDatabase(DB_NAME); localStorage.clear(); location.reload(); } }
+    
+    function importData(e) {
+        const f = e.target.files[0]; if(!f)return;
+        const r = new FileReader();
+        r.onload = async (v) => {
+            try {
+                const d = JSON.parse(v.target.result);
+                // Detekce formátu - pokud je to pole, je to starý export -> zeptáme se na jméno
+                if(Array.isArray(d)) {
+                    const n = prompt("Jak pojmenovat tento balíček?");
+                    if(n) { 
+                        // Konverze starého formátu na nový objekt
+                        decks[n] = d.map(c => ({...c, deck:n, id: c.id || Date.now()+Math.random(), reps:0, interval:0, ef:2.5, nextReview:Date.now()}));
+                    }
+                } else {
+                    // Nový formát (objekt) - sloučíme
+                    decks = {...decks, ...d};
+                }
+                await dbSave(decks); alert("Hotovo!"); renderHome();
+            } catch(err) { alert("Chyba dat"); }
+        };
+        r.readAsText(f);
+    }
+
+    if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+    init();
+</script>
 </body>
 </html>
