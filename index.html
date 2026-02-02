@@ -6,7 +6,7 @@
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="favicon.ico" type="image/x-icon">
     <meta name="theme-color" content="#fdfbf7">
-    <title>Dějepis - Super App v3.0</title>
+    <title>Dějepis SRS 3.0</title>
     <style>
         :root {
             --primary: #1a3a5a; --accent: #e67e22; --bg: #fdfbf7;
@@ -163,7 +163,7 @@
 <div class="container">
 
     <div id="view-home" class="view active">
-        <h2 style="margin-bottom:5px;">Dějepis 3.0</h2>
+        <h2 style="margin-bottom:5px;">Dějepis SRS 3.0</h2>
         <div class="card-box" style="display:flex; justify-content:space-around; text-align:center;">
             <div>
                 <div style="font-size:1.8rem; font-weight:bold; color:var(--accent);">🔥 <span id="home-streak">0</span></div>
@@ -220,7 +220,9 @@
                     </div>
                 </div>
             </div>
+            
             <div id="flip-hint" style="text-align:center; color:#999; font-size:0.8rem; margin-bottom:15px;">Klikni na kartu pro otočení</div>
+
             <div id="srs-buttons" class="hidden">
                 <button class="srs-btn b-0" onclick="rateCard(1)">Znovu<span>&lt;1m</span></button>
                 <button class="srs-btn b-1" onclick="rateCard(3)">Těžké<span>10m</span></button>
@@ -306,7 +308,7 @@
     const DB_NAME = "HistoryAppDB"; const DB_VERSION = 3;
     let db, decks = {}, testMode = 'abcd';
 
-    // --- POUZE 2 ZÁKLADNÍ SADY ---
+    // --- POUZE 2 ZÁKLADNÍ SADY (Bez obřích obrázků Velké Moravy) ---
     const INITIAL_DATA = {
         "Arabská říše": [
             { q: "Kdo tvořili většinu obyvatel Arabského poloostrova?", a: ["Kočovní pastevci – beduíni"], year: null },
