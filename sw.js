@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dejepis-app-v2.2'; // Zvýšeno na v2.2
+const CACHE_NAME = 'dejepis-ultimate-v2.3';
 const ASSETS = [
   './',
   './index.html',
