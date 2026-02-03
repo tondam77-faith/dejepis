@@ -6,10 +6,10 @@
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="favicon.ico" type="image/x-icon">
     <meta name="theme-color" content="#fdfbf7">
-    <title>Dějepis SRS 3.1</title>
+    <title>Dějepis SRS 3.2</title>
     <style>
         :root {
-            --primary: #1a3a5a; --accent: #e67e22; --bg: #f8f9fa;
+            --primary: #1a3a5a; --accent: #e67e22; --bg: #fdfbf7;
             --card-front: #ffffff; --text: #2c3e50;
             --success: #27ae60; --danger: #e74c3c; --warning: #f39c12; --info: #3498db;
             --nav-height: 65px; --safe-bottom: env(safe-area-inset-bottom, 20px);
@@ -18,105 +18,134 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            font-family: 'Segoe UI', system-ui, sans-serif;
             background-color: var(--bg); margin: 0; 
             height: 100dvh; color: var(--text); overflow: hidden;
             display: flex; flex-direction: column;
         }
 
-        /* --- OBECNÉ UI --- */
-        .container { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; width: 100%; max-width: 600px; margin: 0 auto; }
-        .view { flex: 1; overflow-y: auto; padding: 20px; padding-bottom: calc(var(--nav-height) + 40px); display: none; }
-        .view.active { display: block; animation: fadeIn 0.2s ease-out; }
+        /* --- LAYOUT --- */
+        .container { 
+            width: 100%; max-width: 600px; margin: 0 auto;
+            flex: 1; display: flex; flex-direction: column;
+            overflow-y: hidden; position: relative;
+        }
+
+        .view {
+            flex: 1; overflow-y: auto; padding: 20px; 
+            padding-bottom: calc(var(--nav-height) + 40px); /* Místo pro menu */
+            display: none; scroll-behavior: smooth;
+        }
+        .view.active { display: block; animation: fadeIn 0.2s; }
+
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        h2 { color: var(--primary); margin-top: 10px; text-align: center; font-weight: 800; letter-spacing: -0.5px; }
+        /* --- HLAVNÍ MENU (DOMŮ) --- */
+        h2 { color: var(--primary); margin-top: 10px; text-align: center; }
+        .card-box { background: white; padding: 20px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; border: 1px solid #eee; }
+        .deck-item { display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px; border-radius: 12px; margin-bottom: 8px; border: 1px solid #ddd; cursor: pointer; }
+        .deck-item:active { background: #f0f5f9; border-color: var(--primary); }
         
-        .card-box { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        .btn-main { background: var(--primary); color: white; border: none; padding: 18px; border-radius: 16px; width: 100%; font-weight: 700; font-size: 1.1rem; cursor: pointer; box-shadow: 0 4px 15px rgba(26, 58, 90, 0.3); transition: transform 0.1s; }
-        .btn-main:active { transform: scale(0.97); }
-        .btn-alt { background: #eee; color: #555; border: none; padding: 10px 20px; border-radius: 10px; font-weight: 600; cursor: pointer; }
+        .btn-main { background: var(--primary); color: white; border: none; padding: 16px; border-radius: 12px; width: 100%; font-weight: bold; font-size: 1.1rem; cursor: pointer; box-shadow: 0 4px 10px rgba(26, 58, 90, 0.2); }
+        .btn-alt { background: #eee; color: #555; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.9rem; }
 
-        .deck-item { display: flex; justify-content: space-between; align-items: center; background: white; padding: 18px; border-radius: 16px; margin-bottom: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); border: 1px solid transparent; transition: 0.2s; }
-        .deck-item:active { transform: scale(0.98); border-color: var(--primary); }
-
-        /* --- NAVIGACE --- */
-        .bottom-nav {
-            position: fixed; bottom: 0; left: 0; width: 100%; height: calc(var(--nav-height) + 10px);
-            background: white; border-top: 1px solid #f0f0f0; display: flex; justify-content: space-around; 
-            padding-bottom: 10px; z-index: 1000; box-shadow: 0 -5px 20px rgba(0,0,0,0.03);
-        }
-        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #ccc; font-size: 0.75rem; font-weight: 600; }
-        .nav-item.active { color: var(--primary); }
-        .nav-icon { font-size: 1.6rem; margin-bottom: 4px; }
-
-        /* --- IMERSIVNÍ UČENÍ (VZHLED v1.2) --- */
+        /* --- IMERSIVNÍ UČENÍ (Design v1.2) --- */
+        /* Tento blok překryje celou aplikaci */
         #learn-active {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--bg); z-index: 5000; /* Překryje vše */
+            background: var(--bg); z-index: 5000;
             display: flex; flex-direction: column; padding: 20px;
             padding-bottom: var(--safe-bottom);
         }
 
-        .learn-header { display: flex; justify-content: space-between; align-items: center; height: 50px; }
-        .progress-pill { background: rgba(0,0,0,0.05); padding: 5px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: bold; color: var(--primary); }
-        .close-btn { background: none; border: none; font-size: 1.5rem; color: #999; cursor: pointer; padding: 10px; }
+        .learn-header { display: flex; justify-content: space-between; align-items: center; height: 40px; margin-bottom: 10px; }
+        .progress-text { font-weight: bold; color: var(--primary); font-size: 1.1rem; }
+        .close-btn { background: none; border: none; color: var(--danger); font-weight: bold; font-size: 1rem; cursor: pointer; }
 
-        .fc-container { flex: 1; display: flex; align-items: center; justify-content: center; perspective: 1000px; margin: 10px 0 30px 0; }
+        /* Karta - velké stínování a centrování z v1.2 */
+        .fc-container { 
+            flex: 1; display: flex; align-items: center; justify-content: center; 
+            perspective: 1000px; margin-bottom: 20px; 
+        }
         .fc-card { 
-            position: relative; width: 100%; height: 100%; max-height: 500px; 
+            position: relative; width: 100%; height: 100%; max-height: 550px; 
             transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1); transform-style: preserve-3d; 
         }
         .fc-card.flipped { transform: rotateY(180deg); }
         
         .fc-front, .fc-back {
             position: absolute; width: 100%; height: 100%; backface-visibility: hidden;
-            border-radius: 30px; padding: 30px; display: flex; flex-direction: column;
+            border-radius: 24px; padding: 30px; display: flex; flex-direction: column;
             justify-content: center; align-items: center; text-align: center;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.1); border: 1px solid rgba(0,0,0,0.03);
-            overflow-y: auto; -webkit-overflow-scrolling: touch;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.12); border: 1px solid rgba(0,0,0,0.05);
+            background: white; overflow-y: auto;
         }
-        .fc-front { background: white; color: var(--text); }
-        .fc-back { background: #2c3e50; color: white; transform: rotateY(180deg); }
+        .fc-back { background: #fff; transform: rotateY(180deg); border-top: 5px solid var(--primary); }
 
-        .q-deck { text-transform: uppercase; letter-spacing: 1px; font-size: 0.75rem; color: var(--accent); font-weight: 800; margin-bottom: 20px; }
-        .q-text { font-size: 1.6rem; font-weight: 700; line-height: 1.4; margin-bottom: 15px; }
-        .q-img { max-height: 200px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); cursor: zoom-in; }
+        .q-deck { color: var(--accent); text-transform: uppercase; font-size: 0.8rem; font-weight: bold; margin-bottom: 15px; }
+        .q-text { font-size: 1.6rem; font-weight: bold; line-height: 1.4; color: var(--text); }
+        .a-text { font-size: 1.4rem; color: var(--primary); line-height: 1.5; }
+        .q-img { max-height: 200px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
         
-        .tts-icon { font-size: 1.4rem; cursor: pointer; opacity: 0.6; margin-left: 8px; vertical-align: middle; }
-        .tts-icon:hover { opacity: 1; transform: scale(1.1); }
+        .tts-icon { font-size: 1.5rem; cursor: pointer; opacity: 0.5; margin-left: 10px; vertical-align: middle; }
 
-        /* SRS Grid - Dole */
-        .srs-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; height: 80px; margin-bottom: 10px; }
+        /* SRS Tlačítka - dole, velká */
+        .srs-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; height: 80px; margin-top: auto; }
         .srs-btn { 
-            border: none; border-radius: 16px; font-weight: 700; color: white; 
-            display: flex; flex-direction: column; align-items: center; justify-content: center; 
-            cursor: pointer; transition: transform 0.1s; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            border: none; border-radius: 12px; color: white; font-weight: bold; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            font-size: 0.9rem; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.15); transition: transform 0.1s;
         }
         .srs-btn:active { transform: scale(0.95); }
-        .srs-btn small { font-weight: 400; font-size: 0.7rem; margin-top: 3px; opacity: 0.9; }
+        .srs-btn span { font-size: 0.7rem; font-weight: normal; opacity: 0.9; margin-top: 3px; }
         
-        .b-again { background: var(--danger); }
-        .b-hard { background: var(--warning); }
-        .b-good { background: var(--info); }
-        .b-easy { background: var(--success); }
+        .b-0 { background: var(--danger); } 
+        .b-1 { background: var(--warning); } 
+        .b-2 { background: var(--info); } 
+        .b-3 { background: var(--success); }
 
-        /* TESTOVACÍ MOD (Minimalistický) */
-        .test-btn { background: white; padding: 18px; border-radius: 12px; border: 2px solid #eee; font-weight: 600; text-align: left; cursor: pointer; transition: 0.2s; font-size: 1rem; }
-        .test-btn:active { background: #f9f9f9; transform: scale(0.98); }
+        /* --- TESTOVACÍ MOD --- */
+        .mode-switch { display: flex; gap: 5px; margin-bottom: 20px; background: #eee; padding: 4px; border-radius: 12px; }
+        .mode-btn { flex: 1; padding: 10px; border-radius: 8px; background: transparent; cursor: pointer; text-align: center; font-weight: bold; color: #666; }
+        .mode-btn.selected { background: white; color: var(--primary); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        
+        .test-btn { background: white; border: 2px solid #e2ddd3; padding: 15px; border-radius: 12px; text-align: left; font-size: 1.1rem; cursor: pointer; margin-bottom: 10px; font-weight: 500; }
         .test-btn.correct { background: #d4edda; border-color: var(--success); color: #155724; }
         .test-btn.wrong { background: #f8d7da; border-color: var(--danger); color: #721c24; }
+        
+        /* --- NAVIGACE --- */
+        .bottom-nav {
+            position: fixed; bottom: 0; left: 0; width: 100%; 
+            height: calc(var(--nav-height) + var(--safe-bottom)); padding-bottom: var(--safe-bottom);
+            background: white; border-top: 1px solid #e2ddd3; display: flex; 
+            justify-content: space-around; align-items: center; z-index: 1000;
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.05);
+        }
+        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #999; font-size: 0.75rem; cursor: pointer; height: 100%; }
+        .nav-item.active { color: var(--primary); font-weight: bold; }
+        .nav-icon { font-size: 1.5rem; margin-bottom: 4px; }
 
         /* UTILS */
         .hidden { display: none !important; }
-        #lightbox { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; display: none; justify-content: center; align-items: center; }
-        #lightbox img { max-width: 95%; max-height: 95%; border-radius: 10px; }
+        #lightbox { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 20000; display: none; justify-content: center; align-items: center; }
+        #lightbox img { max-width: 95%; max-height: 95%; border-radius: 5px; }
+        .input-write { width: 100%; padding: 15px; border: 2px solid #ddd; border-radius: 12px; font-size: 1.1rem; outline: none; }
+        
+        /* TIMELINE */
+        .timeline-slot { background: white; padding: 12px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; font-weight: 500; }
+        .t-btn { background: #eee; border: none; padding: 8px 12px; border-radius: 6px; }
+        
+        /* Modal */
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; display: none; justify-content: center; align-items: center; }
+        .modal-content { background: white; padding: 25px; border-radius: 15px; width: 90%; max-width: 400px; text-align: center; }
     </style>
 </head>
 <body>
 
+<div class="container">
+
     <div id="view-home" class="view active">
-        <h2>Dějepis SRS 3.1</h2>
+        <h2>Dějepis SRS 3.2</h2>
         <div class="card-box" style="display:flex; justify-content:space-around; text-align:center;">
             <div><div style="font-size:2rem; font-weight:800; color:var(--accent);">🔥 <span id="home-streak">0</span></div><div style="font-size:0.7rem; font-weight:bold; color:#999; text-transform:uppercase;">Dní v řadě</div></div>
             <div><div style="font-size:2rem; font-weight:800; color:var(--primary);"><span id="prof-total">0</span></div><div style="font-size:0.7rem; font-weight:bold; color:#999; text-transform:uppercase;">Opakování</div></div>
@@ -126,23 +155,32 @@
         <div id="home-deck-list"></div>
         
         <div style="text-align:center; margin-top:30px;">
-            <button class="btn-alt" onclick="document.getElementById('file-in').click()">📂 Importovat data</button>
+            <button class="btn-alt" onclick="document.getElementById('file-in').click()">📂 Import souboru</button>
             <button class="btn-alt" onclick="openUrlImport()">🌐 QR / URL Import</button>
             <input type="file" id="file-in" class="hidden" onchange="importData(event)">
-            <p style="font-size:0.7rem; color:#ccc; margin-top:20px;" onclick="fullReset()">Verze 3.1 (Reset)</p>
+            <p style="font-size:0.7rem; color:#ccc; margin-top:20px; cursor:pointer;" onclick="fullReset()">Verze 3.2 (Reset dat)</p>
+        </div>
+    </div>
+
+    <div id="view-learn" class="view">
+        <div id="learn-setup">
+            <h2>🧠 Učení</h2>
+            <p style="text-align:center;">Vyber téma:</p>
+            <div id="learn-deck-list"></div>
+            <button class="btn-main" onclick="startLearningSession()" style="margin-top:20px;">Spustit učení 🚀</button>
         </div>
     </div>
 
     <div id="learn-active" class="hidden">
         <div class="learn-header">
-            <div class="progress-pill" id="learn-progress">1 / 10</div>
-            <button class="close-btn" onclick="exitMode()">✕</button>
+            <span class="progress-text" id="learn-progress">1 / 10</span>
+            <button class="close-btn" onclick="exitMode()">✕ UKONČIT</button>
         </div>
 
         <div class="fc-container" onclick="flipCard()">
             <div class="fc-card" id="fc-card">
                 <div class="fc-front">
-                    <div class="q-deck" id="fc-deck-name">Téma</div>
+                    <div class="q-deck" id="fc-deck-name">TÉMA</div>
                     <img id="fc-img-q" class="q-img hidden">
                     <div style="display:inline-block;">
                         <span class="q-text" id="fc-q">Otázka</span>
@@ -152,7 +190,7 @@
                 <div class="fc-back">
                     <img id="fc-img-a" class="q-img hidden">
                     <div style="display:inline-block;">
-                        <span class="q-text" id="fc-a">Odpověď</span>
+                        <div id="fc-a" class="a-text">Odpověď</div>
                         <span class="tts-icon" onclick="speakText(event, 'fc-a-raw')">🔊</span>
                     </div>
                     <div id="fc-a-raw" class="hidden"></div>
@@ -160,87 +198,84 @@
             </div>
         </div>
 
-        <div id="flip-hint" style="text-align:center; color:#999; font-size:0.8rem; margin-bottom:15px; font-weight:500;">Klikni pro otočení</div>
+        <div id="flip-hint" style="text-align:center; color:#999; font-size:0.8rem; margin-bottom:15px;">Klikni na kartu pro otočení</div>
 
         <div id="srs-buttons" class="hidden srs-grid">
-            <button class="srs-btn b-again" onclick="rateCard(1)">Znovu<small>Hned</small></button>
-            <button class="srs-btn b-hard" onclick="rateCard(3)">Těžké<small>10m</small></button>
-            <button class="srs-btn b-good" onclick="rateCard(4)">Dobré<small>1d</small></button>
-            <button class="srs-btn b-easy" onclick="rateCard(5)">Snadné<small>4d</small></button>
+            <button class="srs-btn b-0" onclick="rateCard(1)">Znovu<span>Hned</span></button>
+            <button class="srs-btn b-1" onclick="rateCard(3)">Těžké<span>10m</span></button>
+            <button class="srs-btn b-2" onclick="rateCard(4)">Dobré<span>1d</span></button>
+            <button class="srs-btn b-3" onclick="rateCard(5)">Snadné<span>4d</span></button>
         </div>
     </div>
 
     <div id="view-test" class="view">
-        <h2>📝 Testování</h2>
-        <div style="background:white; padding:5px; border-radius:12px; display:flex; gap:5px; margin-bottom:20px;">
-            <button class="mode-btn selected" id="m-abcd" onclick="setTestMode('abcd')" style="flex:1; border:none; padding:10px; border-radius:8px; font-weight:bold; background:#eee;">🔠 ABCD</button>
-            <button class="mode-btn" id="m-write" onclick="setTestMode('write')" style="flex:1; border:none; padding:10px; border-radius:8px; font-weight:bold; background:transparent;">✍️ Psaní</button>
-            <button class="mode-btn" id="m-time" onclick="setTestMode('timeline')" style="flex:1; border:none; padding:10px; border-radius:8px; font-weight:bold; background:transparent;">⏳ Osa</button>
-        </div>
-
-        <p style="text-align:center; color:#666;">Vyber téma:</p>
-        <div id="test-deck-list"></div>
-        
-        <div id="test-opts" style="margin:20px 0;">
-            <select id="test-count" style="width:100%; padding:15px; border-radius:12px; border:1px solid #ddd; font-size:1rem;">
-                <option value="5">5 otázek</option>
-                <option value="10">10 otázek</option>
-                <option value="15">15 otázek</option>
-            </select>
-        </div>
-
-        <button class="btn-main" onclick="startTestSession()">Spustit test</button>
-    </div>
-
-    <div id="test-run" class="view hidden">
-        <div style="display:flex; justify-content:space-between; margin-bottom:20px; font-weight:bold;">
-            <span id="t-prog">1/10</span>
-            <span id="t-score" style="color:var(--success)">0 b</span>
+        <div id="test-setup">
+            <h2>📝 Testování</h2>
+            <div class="mode-switch">
+                <div class="mode-btn selected" id="mode-abcd" onclick="setTestMode('abcd')">🔠 ABCD</div>
+                <div class="mode-btn" id="mode-write" onclick="setTestMode('write')">✍️ Psaní</div>
+                <div class="mode-btn" id="mode-timeline" onclick="setTestMode('timeline')">⏳ Osa</div>
+            </div>
+            <p style="text-align:center;">Vyber téma:</p>
+            <div id="test-deck-list"></div>
+            <div id="test-count-box" style="margin:20px 0;">
+                <select id="test-count" style="width:100%; padding:15px; border-radius:12px; border:1px solid #ddd; font-size:1rem;">
+                    <option value="5">5 otázek</option>
+                    <option value="10">10 otázek</option>
+                    <option value="15">15 otázek</option>
+                </select>
+            </div>
+            <button class="btn-main" onclick="startTestSession()">Spustit test</button>
         </div>
         
-        <div id="t-content">
-            <img id="t-img" class="q-img hidden" style="margin:0 auto; display:block;">
-            <div class="q-text" id="t-q" style="text-align:center; margin-bottom:30px;">Otázka</div>
-            
-            <div id="t-abcd" style="display:grid; gap:10px;"></div>
-            
-            <div id="t-write" class="hidden">
-                <input type="text" id="t-input" style="width:100%; padding:15px; border-radius:12px; border:2px solid #ddd; font-size:1.2rem;" placeholder="Odpověď...">
-                <button class="btn-main" style="margin-top:15px;" onclick="evalWrite()">Zkontrolovat</button>
-                <div id="t-fb" style="text-align:center; margin-top:15px; font-weight:bold;"></div>
+        <div id="test-active" class="hidden">
+            <div style="display:flex; justify-content:space-between; margin-bottom:20px; font-weight:bold;">
+                <span id="test-progress-txt">1/10</span>
+                <span id="test-score" style="color:var(--success);">0 b</span>
             </div>
-
-            <div id="t-time" class="hidden">
-                <div id="time-slots"></div>
-                <button class="btn-main" style="margin-top:15px;" onclick="evalTime()">Zkontrolovat pořadí</button>
+            <div id="test-content-area">
+                <img id="test-img" class="q-img hidden" style="margin:0 auto; display:block;">
+                <div class="q-text" id="test-q" style="margin-bottom:20px; text-align:center;"></div>
+                <div id="test-options" style="display:grid; gap:10px;"></div>
+                <div id="test-write-area" class="hidden">
+                    <input type="text" id="test-input" class="input-write" placeholder="Odpověď..." autocomplete="off">
+                    <button class="btn-main" onclick="evaluateWrite()" style="margin-top:15px;">Zkontrolovat</button>
+                    <div id="write-feedback" style="margin-top:15px; text-align:center; font-weight:bold;"></div>
+                </div>
+                <div id="test-timeline-area" class="hidden">
+                    <div id="timeline-slots"></div>
+                    <button class="btn-main" onclick="evaluateTimeline()" style="margin-top:15px;">Zkontrolovat pořadí</button>
+                </div>
             </div>
+            <button id="test-next-btn" class="btn-main hidden" onclick="nextTestQuestion()" style="margin-top:20px; background:var(--accent);">Další otázka ➡️</button>
         </div>
 
-        <button id="t-next" class="btn-main hidden" style="margin-top:20px; background:var(--accent);" onclick="nextTestQ()">Další ➡️</button>
+        <div id="test-result" class="hidden" style="text-align:center;">
+            <h2>Výsledky</h2>
+            <div style="font-size:4rem; font-weight:800; color:var(--primary); margin:20px 0;" id="test-final-score"></div>
+            <button class="btn-alt" onclick="toggleReview()" style="margin-bottom:20px;">🔍 Zobrazit chyby</button>
+            <div id="review-box" class="hidden" style="text-align:left; margin:20px 0;"></div>
+            <button class="btn-main" onclick="exitMode()">Zpět do menu</button>
+        </div>
     </div>
 
-    <div id="test-res" class="view hidden" style="text-align:center; justify-content:center;">
-        <h2>Výsledek</h2>
-        <div style="font-size:4rem; font-weight:800; color:var(--primary); margin:20px 0;" id="final-score">100%</div>
-        <button class="btn-alt" onclick="showReview()">🔍 Revize chyb</button>
-        <div id="rev-box" class="hidden" style="text-align:left; margin:20px 0;"></div>
-        <button class="btn-main" style="margin-top:20px;" onclick="exitMode()">Zpět domů</button>
-    </div>
-
-    <div class="bottom-nav" id="main-nav">
+    <nav class="bottom-nav">
         <div class="nav-item active" onclick="switchTab('home')"><div class="nav-icon">🏠</div>Domů</div>
+        <div class="nav-item" onclick="switchTab('learn')"><div class="nav-icon">🧠</div>Učení</div>
         <div class="nav-item" onclick="switchTab('test')"><div class="nav-icon">📝</div>Test</div>
-    </div>
+    </nav>
 
 </div>
 
 <div id="lightbox" onclick="this.style.display='none'"><img id="lb-img"></div>
-<div id="url-modal" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9000; display:none; justify-content:center; align-items:center;">
-    <div style="background:white; padding:25px; border-radius:20px; width:90%;">
+<div id="url-modal" class="modal">
+    <div class="modal-content">
         <h3>Import z URL</h3>
-        <input id="url-in" type="text" style="width:100%; padding:10px; margin:15px 0; border:1px solid #ddd; border-radius:8px;" placeholder="https://raw.github...">
-        <button class="btn-main" onclick="runUrlImport()">Nahrát</button>
-        <button class="btn-alt" onclick="document.getElementById('url-modal').style.display='none'" style="margin-top:10px; width:100%;">Zrušit</button>
+        <input id="url-in" type="text" style="width:100%; padding:10px; margin:15px 0; border:1px solid #ddd; border-radius:8px;" placeholder="https://...">
+        <div style="display:flex; gap:10px;">
+            <button class="btn-alt" onclick="document.getElementById('url-modal').style.display='none'" style="flex:1;">Zrušit</button>
+            <button class="btn-main" onclick="runUrlImport()" style="flex:1; padding:10px;">Nahrát</button>
+        </div>
     </div>
 </div>
 
@@ -248,8 +283,24 @@
     const DB="HistoryAppDB", VER=3; let db, decks={}, tMode='abcd', tQ=[], tScore=0, tIdx=0, tHist=[], lQ=[], cCard=null;
 
     const DATA = {
-        "Arabská říše": [{q:"Kdo tvořili většinu obyvatel Arabského poloostrova?",a:["Kočovní pastevci – beduíni"],year:null},{q:"Co znamená slovo islám?",a:["Odevzdanost Bohu"],year:610},{q:"Kdy došlo k hidžře (odchod z Mekky)?",a:["Rok 622"],year:622},{q:"Svatá kniha muslimů?",a:["Korán"],year:null},{q:"5 pilířů islámu",a:["Víra","Modlitba","Almužna","Půst","Pouť"],year:null},{q:"Co je chalífát?",a:["Arabská říše v čele s chalífou"],year:null},{q:"Které státy leží na území ovládaném Araby?",a:["Španělsko","Portugalsko"],year:711},{q:"Co je minaret?",a:["Věž u mešity"],year:null},{q:"Co je džihád?",a:["Svatá válka (šíření islámu)"],year:null},{q:"Dynastie vládnoucí z Damašku?",a:["Umajjovci"],year:661},{q:"Dynastie vládnoucí z Bagdádu?",a:["Abbásovci"],year:750},{q:"Co je mešita?",a:["Muslimská modlitebna"],year:null},{q:"Co islám zakazuje zobrazovat?",a:["Lidi a zvířata"],year:null},{q:"Arabský lékař a filozof?",a:["Avicenna"],year:1000},{q:"Kterou říši Arabové zničili?",a:["Perskou"],year:651}],
-        "Slované a Sámova říše": [{q:"Kdy přišli Slované na naše území?",a:["V 6. století"],year:550},{q:"Typický slovanský dům?",a:["Polozemnice"],year:null},{q:"Kdo byl Sámo?",a:["Francký kupec, vládce Slovanů"],year:623},{q:"Kdy a kde porazil Sámo Franky?",a:["Rok 631 u Wogastisburgu"],year:631},{q:"Co se stalo po Sámově smrti?",a:["Říše se rozpadla"],year:658},{q:"Hlavní slovanský bůh?",a:["Perun"],year:null},{q:"Pravlast Slovanů?",a:["Mezi Vislou a Dněprem"],year:null},{q:"Proti komu Sámo bojoval?",a:["Proti Avarům a Frankům"],year:623},{q:"Franský král poražený u Wogastisburgu?",a:["Dagobert I."],year:631},{q:"Slovanské zemědělství?",a:["Dvojpolní hospodářství"],year:null},{q:"První slovanské státy?",a:["Velká Morava, Bulharsko, Polsko"],year:800},{q:"Jediný písemný pramen o Sámovi?",a:["Fredegarova kronika"],year:660},{q:"Co uctívali Slované?",a:["Přírodní síly (pohanství)"],year:null},{q:"Co se našlo v hrobech?",a:["Šperky, zbraně (ostruhy)"],year:null},{q:"Tři směry expanze Slovanů?",a:["Západ, Východ, Jih"],year:null}]
+        "Arabská říše": [
+            { q: "Kdo tvořili většinu obyvatel Arabského poloostrova?", a: ["Kočovní pastevci – beduíni"], year: null },
+            { q: "Co znamená slovo islám?", a: ["Odevzdanost Bohu"], year: 610 },
+            { q: "Kdy došlo k hidžře (odchod z Mekky)?", a: ["Rok 622"], year: 622 },
+            { q: "Svatá kniha muslimů?", a: ["Korán"], year: null },
+            { q: "5 pilířů islámu", a: ["Víra", "Modlitba", "Almužna", "Půst", "Pouť"], year: null },
+            { q: "Co je chalífát?", a: ["Arabská říše v čele s chalífou"], year: null },
+            { q: "Které státy leží na území ovládaném Araby?", a: ["Španělsko", "Portugalsko"], year: 711 },
+            { q: "Co je minaret?", a: ["Věž u mešity"], year: null }
+        ],
+        "Slované a Sámova říše": [
+            { q: "Kdy přišli Slované na naše území?", a: ["V 6. století"], year: 550 },
+            { q: "Typický slovanský dům?", a: ["Polozemnice"], year: null },
+            { q: "Kdo byl Sámo?", a: ["Francký kupec, vládce Slovanů"], year: 623 },
+            { q: "Kdy a kde porazil Sámo Franky?", a: ["Rok 631 u Wogastisburgu"], year: 631 },
+            { q: "Co se stalo po Sámově smrti?", a: ["Říše se rozpadla"], year: 658 },
+            { q: "Hlavní slovanský bůh?", a: ["Perun"], year: null }
+        ]
     };
 
     async function init(){await dbOpen();decks=await dbLoad()||{};if(!Object.keys(decks).length){for(let[n,c]of Object.entries(DATA))decks[n]=c.map((x,i)=>({...x,id:Date.now()+i,reps:0,interval:0,ef:2.5,nextReview:Date.now()}));await dbSave(decks);}renderHome();document.addEventListener('click',e=>{if(e.target.classList.contains('q-img')){document.getElementById('lb-img').src=e.target.src;document.getElementById('lightbox').style.display='flex';}});}
@@ -262,98 +313,115 @@
         document.getElementById('view-'+id).classList.add('active');
         document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
         document.querySelector(`.nav-item[onclick="switchTab('${id}')"]`).classList.add('active');
-        if(id==='home')renderHome(); if(id==='test')renderDeckSel();
+        if(id==='home')renderHome(); if(id==='learn')renderDeckSel('learn'); if(id==='test')renderDeckSel('test');
     }
 
     function renderHome(){
         const l=document.getElementById('home-deck-list'); l.innerHTML="";
-        let tr=0; Object.keys(decks).forEach(n=>{tr+=decks[n].reduce((a,c)=>a+(c.reps||0),0);l.innerHTML+=`<div class="deck-item" onclick="startLearning('${n}')"><span>${n}</span> <span style="color:#999;font-size:0.8rem;">${decks[n].length} karet</span></div>`});
+        let tr=0; Object.keys(decks).forEach(n=>{tr+=decks[n].reduce((a,c)=>a+(c.reps||0),0);l.innerHTML+=`<div class="deck-item" onclick="goToLearn('${n}')"><span>${n}</span> <span style="color:#999;font-size:0.8rem;">${decks[n].length} karet</span></div>`});
         document.getElementById('prof-total').innerText=tr;
         const s=JSON.parse(localStorage.getItem('hist_s'))||{str:0}; document.getElementById('home-streak').innerText=s.str;
     }
+    
+    function goToLearn(n) { switchTab('learn'); setTimeout(()=>{ document.querySelector(`input[value="${n}"]`).checked=true; startLearningSession(); },100); }
+
+    function renderDeckSel(mode) {
+        const l=document.getElementById(mode+'-deck-list'); l.innerHTML="";
+        Object.keys(decks).forEach(n=>l.innerHTML+=`<div class="deck-item"><label style="flex:1;display:flex;align-items:center;"><input type="checkbox" name="${mode}-d" value="${n}" style="transform:scale(1.3);margin-right:10px;"> ${n}</label></div>`);
+    }
 
     // --- UČENÍ (IMERSIVNÍ) ---
-    function startLearning(n){
-        lQ = decks[n].filter(c=>c.nextReview<=Date.now());
-        if(!lQ.length) return alert("Vše umíš! Zkus to zítra.");
+    function startLearningSession(){
+        const sel=Array.from(document.querySelectorAll('input[name="learn-d"]:checked')).map(i=>i.value); if(!sel.length)return alert("Vyber téma!");
+        lQ=[]; sel.forEach(n=>lQ.push(...decks[n].filter(c=>c.nextReview<=Date.now())));
+        if(!lQ.length)return alert("Vše umíš! Zkus to zítra.");
         lQ.sort(()=>Math.random()-0.5);
         document.getElementById('learn-active').classList.remove('hidden');
         nextCard();
     }
     function nextCard(){
-        if(!lQ.length) return exitMode();
-        cCard = lQ[0];
-        const c = document.getElementById('fc-card'); c.classList.remove('flipped');
+        if(!lQ.length)return exitMode();
+        cCard=lQ[0];
+        const c=document.getElementById('fc-card'); c.classList.remove('flipped');
         document.getElementById('srs-buttons').classList.add('hidden');
         document.getElementById('flip-hint').classList.remove('hidden');
-        
-        document.getElementById('fc-deck-name').innerText = "Karta";
-        document.getElementById('fc-q').innerText = cCard.q;
-        document.getElementById('fc-a').innerHTML = Array.isArray(cCard.a)?cCard.a.map(i=>`• ${i}`).join('<br>'):cCard.a;
-        document.getElementById('fc-a-raw').innerText = Array.isArray(cCard.a)?cCard.a.join('. '):cCard.a;
+        document.getElementById('fc-deck-name').innerText=cCard.deck;
+        document.getElementById('fc-q').innerText=cCard.q;
+        const aList = Array.isArray(cCard.a) ? cCard.a.map(i=>`• ${i}`).join('<br>') : cCard.a;
+        document.getElementById('fc-a').innerHTML=aList;
+        document.getElementById('fc-a-raw').innerText=Array.isArray(cCard.a)?cCard.a.join('. '):cCard.a;
         
         const iQ=document.getElementById('fc-img-q'); if(cCard.qImg){iQ.src=cCard.qImg;iQ.classList.remove('hidden')}else iQ.classList.add('hidden');
         const iA=document.getElementById('fc-img-a'); if(cCard.aImg){iA.src=cCard.aImg;iA.classList.remove('hidden')}else iA.classList.add('hidden');
         
-        document.getElementById('learn-progress').innerText = `Zbývá: ${lQ.length}`;
+        document.getElementById('learn-progress').innerText=`Zbývá: ${lQ.length}`;
     }
-    function flipCard(){ document.getElementById('fc-card').classList.add('flipped'); document.getElementById('srs-buttons').classList.remove('hidden'); document.getElementById('flip-hint').classList.add('hidden'); }
+    function flipCard(){document.getElementById('fc-card').classList.add('flipped');document.getElementById('srs-buttons').classList.remove('hidden');document.getElementById('flip-hint').classList.add('hidden');}
     function rateCard(q){
         const c=cCard; let s=JSON.parse(localStorage.getItem('hist_s'))||{str:0,l:''}; const t=new Date().toDateString(); if(s.l!==t){s.str++;s.l=t;localStorage.setItem('hist_s',JSON.stringify(s));}
         if(q<3){c.reps=0;c.interval=0;c.nextReview=Date.now();lQ.push(lQ.shift());}
         else{c.reps++; c.interval=(c.reps===1)?(q===3?0.007:(q===4?1:4)):Math.max(1,Math.round(c.interval*c.ef)); c.ef+=(0.1-(5-q)*(0.08+(5-q)*0.02)); c.nextReview=Date.now()+(c.interval*86400000);
-        const dk=Object.keys(decks).find(k=>decks[k].find(x=>x.id===c.id)); const idx=decks[dk].findIndex(x=>x.id===c.id); decks[dk][idx]=c; dbSave(decks); lQ.shift();}
+        const dk=c.deck; const idx=decks[dk].findIndex(x=>x.id===c.id); decks[dk][idx]=c; dbSave(decks); lQ.shift();}
         nextCard();
     }
     function speakText(e,id){e.stopPropagation();const t=document.getElementById(id).innerText;const u=new SpeechSynthesisUtterance(t);u.lang='cs-CZ';window.speechSynthesis.cancel();window.speechSynthesis.speak(u);}
 
     // --- TEST ---
-    function renderDeckSel(){const l=document.getElementById('test-deck-list');l.innerHTML="";Object.keys(decks).forEach(n=>l.innerHTML+=`<div class="deck-item"><label style="flex:1;display:flex;align-items:center;"><input type="checkbox" name="td" value="${n}" style="transform:scale(1.3);margin-right:10px;"> ${n}</label></div>`)}
-    function setTestMode(m){tMode=m;document.querySelectorAll('.mode-btn').forEach(b=>{b.style.background='transparent';b.style.color='#666'});const a=document.getElementById(m==='abcd'?'m-abcd':(m==='write'?'m-write':'m-time'));a.style.background='#fff';a.style.color='#1a3a5a';if(m==='timeline'){document.getElementById('test-opts').classList.add('hidden')}else{document.getElementById('test-opts').classList.remove('hidden')}}
+    function setTestMode(m){tMode=m;document.querySelectorAll('.mode-btn').forEach(b=>{b.classList.remove('selected')});document.getElementById(m==='abcd'?'mode-abcd':(m==='write'?'mode-write':'mode-timeline')).classList.add('selected');if(m==='timeline'){document.getElementById('test-count-box').classList.add('hidden')}else{document.getElementById('test-count-box').classList.remove('hidden')}}
     function startTestSession(){
-        const sel=Array.from(document.querySelectorAll('input[name="td"]:checked')).map(i=>i.value); if(!sel.length)return alert("Vyber téma!");
+        const sel=Array.from(document.querySelectorAll('input[name="test-d"]:checked')).map(i=>i.value); if(!sel.length)return alert("Vyber téma!");
         let p=[]; sel.forEach(n=>p.push(...decks[n]));
         if(tMode==='timeline'){p=p.filter(c=>c.year); if(p.length<3)return alert("Málo karet s rokem!"); p.sort(()=>Math.random()-0.5); tQ=p.slice(0,5);}
         else{const l=parseInt(document.getElementById('test-count').value); p.sort(()=>Math.random()-0.5); tQ=p.slice(0,l);}
-        tScore=0;tIdx=0;tHist=[]; document.getElementById('view-test').classList.remove('active'); document.getElementById('test-run').classList.add('active'); renderTestQ();
+        tScore=0;tIdx=0;tHist=[]; 
+        document.getElementById('test-setup').classList.add('hidden'); document.getElementById('test-active').classList.remove('hidden');
+        renderTestQ();
     }
     function renderTestQ(){
         if(tIdx>=tQ.length)return finishTest();
-        const c=tQ[tIdx]; document.getElementById('t-prog').innerText=`${tIdx+1}/${tQ.length}`; document.getElementById('t-next').classList.add('hidden');
-        ['t-abcd','t-write','t-time'].forEach(i=>document.getElementById(i).classList.add('hidden')); document.getElementById('t-q').style.display='block'; document.getElementById('t-img').classList.add('hidden');
-        if(tMode==='timeline'){document.getElementById('t-q').style.display='none';document.getElementById('t-time').classList.remove('hidden');renderTimeline();}
+        const c=tQ[tIdx]; document.getElementById('test-progress-txt').innerText=`${tIdx+1}/${tQ.length}`; document.getElementById('test-next-btn').classList.add('hidden');
+        ['test-options','test-write-area','test-timeline-area'].forEach(i=>document.getElementById(i).classList.add('hidden')); document.getElementById('test-q').style.display='block'; document.getElementById('test-img').classList.add('hidden');
+        if(tMode==='timeline'){document.getElementById('test-q').style.display='none';document.getElementById('test-timeline-area').classList.remove('hidden');renderTimeline();}
         else{
-            document.getElementById('t-q').innerText=c.q; if(c.qImg){const i=document.getElementById('t-img');i.src=c.qImg;i.classList.remove('hidden')}
+            document.getElementById('test-q').innerText=c.q; if(c.qImg){const i=document.getElementById('test-img');i.src=c.qImg;i.classList.remove('hidden')}
             if(tMode==='abcd') renderABCD(c); else renderWrite();
         }
     }
     function renderABCD(c){
-        const d=document.getElementById('t-abcd');d.innerHTML="";d.classList.remove('hidden');
-        const cor=Array.isArray(c.a)?c.a[0]:c.a; const oth=decks[Object.keys(decks).find(k=>decks[k].includes(c))].filter(x=>x.id!==c.id);
+        const d=document.getElementById('test-options');d.innerHTML="";d.classList.remove('hidden');
+        const cor=Array.isArray(c.a)?c.a[0]:c.a; const oth=decks[c.deck].filter(x=>x.id!==c.id);
         let b=[]; oth.forEach(o=>b.push(Array.isArray(o.a)?o.a[0]:o.a)); b=[...new Set(b)].sort(()=>Math.random()-0.5).slice(0,3);
         let o=[{t:cor,ok:true},...b.map(x=>({t:x,ok:false}))].sort(()=>Math.random()-0.5);
         o.forEach(opt=>{const btn=document.createElement('div');btn.className='test-btn';btn.innerText=opt.t;btn.onclick=()=>{
             document.querySelectorAll('.test-btn').forEach(x=>x.style.pointerEvents='none');
             if(opt.ok){btn.classList.add('correct');tScore++;tHist.push({q:c.q,ok:true,u:opt.t,c:cor})}else{btn.classList.add('wrong');tHist.push({q:c.q,ok:false,u:opt.t,c:cor})}
-            document.getElementById('t-score').innerText=tScore+" b"; document.getElementById('t-next').classList.remove('hidden');
+            document.getElementById('test-score').innerText=tScore+" b"; document.getElementById('test-next-btn').classList.remove('hidden');
         };d.appendChild(btn)});
     }
-    function renderWrite(){document.getElementById('t-write').classList.remove('hidden');const i=document.getElementById('t-input');i.value="";i.disabled=false;i.focus();document.getElementById('t-fb').innerText=""}
-    function evalWrite(){
-        const i=document.getElementById('t-input');const v=i.value.trim();const c=tQ[tIdx];const cor=Array.isArray(c.a)?c.a:[c.a];
+    function renderWrite(){document.getElementById('test-write-area').classList.remove('hidden');const i=document.getElementById('test-input');i.value="";i.disabled=false;i.focus();document.getElementById('write-feedback').innerText=""}
+    function evaluateWrite(){
+        const i=document.getElementById('test-input');const v=i.value.trim();const c=tQ[tIdx];const cor=Array.isArray(c.a)?c.a:[c.a];
         const ok=cor.some(a=>v.toLowerCase().includes(a.toLowerCase().substring(0,4)));
-        const fb=document.getElementById('t-fb');if(ok){fb.innerHTML="<span style='color:green'>Správně!</span>";tScore++;tHist.push({q:c.q,ok:true,u:v,c:cor[0]})}else{fb.innerHTML="<span style='color:red'>Chyba.</span> "+cor[0];tHist.push({q:c.q,ok:false,u:v,c:cor[0]})}
-        i.disabled=true;document.getElementById('t-score').innerText=tScore+" b";document.getElementById('t-next').classList.remove('hidden');
+        const fb=document.getElementById('write-feedback');if(ok){fb.innerHTML="<span style='color:green'>Správně!</span>";tScore++;tHist.push({q:c.q,ok:true,u:v,c:cor[0]})}else{fb.innerHTML="<span style='color:red'>Chyba.</span> "+cor[0];tHist.push({q:c.q,ok:false,u:v,c:cor[0]})}
+        i.disabled=true;document.getElementById('test-score').innerText=tScore+" b";document.getElementById('test-next-btn').classList.remove('hidden');
     }
     let tlItems=[]; 
-    function renderTimeline(){tlItems=[...tQ];const s=document.getElementById('time-slots');s.innerHTML="";tlItems.sort(()=>Math.random()-0.5).forEach((x,i)=>{s.innerHTML+=`<div style="background:white;padding:10px;border:1px solid #ddd;border-radius:8px;margin-bottom:5px;display:flex;justify-content:space-between;"><span>${x.q}</span><div><button onclick="mvTl(${i},-1)">▲</button><button onclick="mvTl(${i},1)">▼</button></div></div>`});}
+    function renderTimeline(){tlItems=[...tQ];const s=document.getElementById('timeline-slots');s.innerHTML="";tlItems.sort(()=>Math.random()-0.5).forEach((x,i)=>{s.innerHTML+=`<div class="timeline-slot"><span>${x.q}</span><div class="timeline-ctrl"><button class="t-btn" onclick="mvTl(${i},-1)">▲</button><button class="t-btn" onclick="mvTl(${i},1)">▼</button></div></div>`});}
     function mvTl(i,d){const n=i+d;if(n<0||n>=tlItems.length)return;[tlItems[i],tlItems[n]]=[tlItems[n],tlItems[i]];renderTimelineUI();}
-    function renderTimelineUI(){const s=document.getElementById('time-slots');s.innerHTML="";tlItems.forEach((x,i)=>{s.innerHTML+=`<div style="background:white;padding:10px;border:1px solid #ddd;border-radius:8px;margin-bottom:5px;display:flex;justify-content:space-between;"><span>${x.q}</span><div><button onclick="mvTl(${i},-1)">▲</button><button onclick="mvTl(${i},1)">▼</button></div></div>`})}
-    function evalTime(){let ok=true;for(let i=0;i<tlItems.length-1;i++){if(tlItems[i].year>tlItems[i+1].year)ok=false} if(ok){alert("Správně!");tScore+=5;}else{alert("Chyba.");} finishTest();}
-    function nextTestQ(){tIdx++;renderTestQ();}
-    function finishTest(){document.getElementById('test-run').classList.remove('active');document.getElementById('test-res').classList.add('active');document.getElementById('final-score').innerText=Math.round((tScore/(tMode==='timeline'?5:tQ.length))*100)+"%";}
-    function exitMode(){document.getElementById('learn-active').classList.add('hidden');document.getElementById('test-run').classList.remove('active');document.getElementById('test-res').classList.remove('active');switchTab('home');}
-    function showReview(){const b=document.getElementById('rev-box');if(!b.classList.contains('hidden')){b.classList.add('hidden');return}b.innerHTML="";tHist.forEach(h=>{b.innerHTML+=`<div style="padding:10px;border-bottom:1px solid #eee;border-left:5px solid ${h.ok?'green':'red'}"><b>${h.q}</b><br>Ty: ${h.u}<br>OK: ${h.c}</div>`});b.classList.remove('hidden');}
+    function renderTimelineUI(){const s=document.getElementById('timeline-slots');s.innerHTML="";tlItems.forEach((x,i)=>{s.innerHTML+=`<div class="timeline-slot"><span>${x.q}</span><div class="timeline-ctrl"><button class="t-btn" onclick="mvTl(${i},-1)">▲</button><button class="t-btn" onclick="mvTl(${i},1)">▼</button></div></div>`})}
+    function evaluateTimeline(){let ok=true;for(let i=0;i<tlItems.length-1;i++){if(tlItems[i].year>tlItems[i+1].year)ok=false} if(ok){alert("Správně!");tScore+=5;}else{alert("Chyba.");} finishTest();}
+    function nextTestQuestion(){tIdx++;renderTestQ();}
+    function finishTest(){document.getElementById('test-active').classList.add('hidden');document.getElementById('test-result').classList.remove('hidden');document.getElementById('test-final-score').innerText=Math.round((tScore/(tMode==='timeline'?5:tQ.length))*100)+"%";}
+    function toggleReview(){const b=document.getElementById('review-box');if(!b.classList.contains('hidden')){b.classList.add('hidden');return}b.innerHTML="";tHist.forEach(h=>{b.innerHTML+=`<div class="review-item ${h.ok?'ok':'nok'}"><div class="rev-q">${h.q}</div><div>Tvoje: ${h.u} ${h.ok?'✅':'❌'}</div><div style="color:#666">Správně: ${h.c}</div></div>`});b.classList.remove('hidden');}
+    
+    function exitMode(){
+        document.getElementById('learn-active').classList.add('hidden');
+        document.getElementById('test-active').classList.add('hidden');
+        document.getElementById('test-result').classList.add('hidden');
+        document.getElementById('learn-setup').classList.remove('hidden');
+        document.getElementById('test-setup').classList.remove('hidden');
+        switchTab('home');
+    }
 
     // --- SYSTEM ---
     function openUrlImport(){document.getElementById('url-modal').style.display='flex'}
@@ -362,7 +430,16 @@
         try{const r=await fetch(u);const d=await r.json();processImport(d);document.getElementById('url-modal').style.display='none';}catch(e){alert("Chyba URL")}
     }
     function importData(e){const r=new FileReader();r.onload=v=>{try{processImport(JSON.parse(v.target.result))}catch(e){alert("Chyba")}};r.readAsText(e.target.files[0])}
-    async function processImport(d){const c=decks;Object.keys(d).forEach(k=>{if(!c[k])c[k]=[];const n=Array.isArray(d)?d:d[k];c[k]=[...c[k],...n.map(x=>({...x,id:Date.now()+Math.random(),reps:0,interval:0,ef:2.5,nextReview:Date.now()}))]});decks=c;await dbSave(decks);alert("Hotovo");renderHome()}
+    async function processImport(d){
+        const c=decks;
+        Object.keys(d).forEach(k=>{
+            if(!c[k])c[k]=[]; 
+            const n=Array.isArray(d)?d:d[k];
+            // Smart Merge: přidat jen co tam není nebo aktualizovat
+            c[k]=[...c[k],...n.map(x=>({...x,id:Date.now()+Math.random(),reps:0,interval:0,ef:2.5,nextReview:Date.now()}))];
+        });
+        decks=c; await dbSave(decks); alert("Hotovo"); renderHome();
+    }
     function fullReset(){if(confirm("Smazat?")){indexedDB.deleteDatabase(DB);localStorage.clear();location.reload()}}
 
     if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js');
