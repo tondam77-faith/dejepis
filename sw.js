@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dejepis-srs-v4.0';
+const CACHE_NAME = 'dejepis-srs-v4.2';
 const ASSETS = [
   './',
   './index.html',
